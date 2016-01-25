@@ -1,16 +1,17 @@
-import {setEntries, next, restart, vote, INITIAL_STATE} from './core';
+import {setPlayers, nextTurn, restart, INITIAL_STATE, playerStart, setReady} from './core';
 
 export default function reducer(state = INITIAL_STATE, action) {
   switch (action.type) {
-  case 'SET_ENTRIES':
-    return setEntries(state, action.entries);
-  case 'NEXT':
-    return next(state);
+  case 'SET_PLAYERS':
+    return setPlayers(state, action.players);
+  case 'NEXT_TURN':
+    return nextTurn(state);
   case 'RESTART':
     return restart(state);
-  case 'VOTE':
-    return state.update('vote',
-                        voteState => vote(voteState, action.entry, action.clientId));
+  case 'PLAYER_START':
+    return playerStart(state, action.clientId);
+  case 'PLAYER_READY':
+    return setReady(state, action.clientId);
   }
   return state;
 }

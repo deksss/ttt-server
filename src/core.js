@@ -2,73 +2,66 @@ import {List, Map} from 'immutable';
 
 export const INITIAL_STATE = Map();
 
-export function setEntries(state, entries) {
-  const list = List(entries);
-  return state.set('entries', list)
-              .set('initialEntries', list);
+export function setPlayers(state, players) {
+  const list = List(players);
+  return state.set('players', list)
+              .set('initialPlayers', list);
 }
 
-function getWinners(vote) {
-  if (!vote) return [];
-  const [one, two] = vote.get('pair');
-  const oneVotes = vote.getIn(['tally', one], 0);
-  const twoVotes = vote.getIn(['tally', two], 0);
-  if      (oneVotes > twoVotes)  return [one];
-  else if (oneVotes < twoVotes)  return [two];
-  else                           return [one, two];
+
+const coin = function () {
+  return Math.random() > 0.5;
 }
 
-export function next(state, round = state.getIn(['vote', 'round'], 0)) {
-  const entries = state.get('entries')
-                       .concat(getWinners(state.get('vote')));
-  if (entries.size === 1) {
-    return state.remove('vote')
-                .remove('entries')
-                .set('winner', entries.first());
-  } else {
-    return state.merge({
-      vote: Map({
-        round: round + 1,
-        pair: entries.take(2)
-      }),
-      entries: entries.skip(2)
-    });
+export function nextTurn(state) {
+  var curPlayer = state.get('curPlayer') || '';
+  const p1 = state.get('players').get(0).name || 'p1';
+  const p2 = state.get('players').get(1).name || 'p2';
+
+  if (!curPlayer) {
+    if (coin()) {
+      return state.set('curPlayer', p1);
+    }
+    else {
+      return state.set('curPlayer', p2)
+    }
+  }
+  else if (curPlayer === p1) {
+    return state.set('curPlayer', p2);
+  }
+  else {
+    return state.set('curPlayer', p1);
   }
 }
 
 export function restart(state) {
-  const round = state.getIn(['vote', 'round'], 0);
-  return next(
-    state.set('entries', state.get('initialEntries'))
-         .remove('vote')
-         .remove('winner'),
-    round
-  );
+  return state;
 }
 
-function removePreviousVote(voteState, voter) {
-  const previousVote = voteState.getIn(['votes', voter]);
-  if (previousVote) {
-    return voteState.updateIn(['tally', previousVote], t => t - 1)
-                    .removeIn(['votes', voter]);
-  } else {
-    return voteState;
+export function playerStart(state, playerId) {
+  var players = state.get('players').toArray();
+  for (var i = 0; i < players.length; i++) {
+    if( players[i].id === '' ) {
+      players[i].id = playerId;
+      players[i].ready = true;
+      break;
+    } else if (players[i].id === playerId) {
+      break;
+    }
   }
+    return setReady(state.merge(
+      Map({'players' : List(players)})), playerId);
 }
 
-function addVote(voteState, entry, voter) {
-  if (voteState.get('pair').includes(entry)) {
-    return voteState.updateIn(['tally', entry], 0, t => t + 1)
-                    .setIn(['votes', voter], entry);
-  } else {
-    return voteState;
+export function setReady(state, playerId) {
+  let ready = true;
+  var players = state.get('players').toArray();
+  for (var i = 0; i < players.length; i++) {
+    if(players[i].ready === false) {
+      ready = false;
+      break;
+    }
   }
-}
-
-export function vote(voteState, entry, voter) {
-  return addVote(
-    removePreviousVote(voteState, voter),
-    entry,
-    voter
-  );
+  return state.merge(
+      Map({'ready' : ready}));
 }
