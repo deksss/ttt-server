@@ -12,6 +12,10 @@ export default function reducer(state = INITIAL_STATE, action) {
     return playerStart(state, action.clientId);
   case 'PLAYER_READY':
     return setReady(state, action.clientId);
+  case 'CREATE_ROOM':
+    return createRoom(state, action.clientId);
+  case 'JOIN_ROOM':
+    return joinRoom(state, action.clientId, action.roomId);
   }
   return state;
 }
