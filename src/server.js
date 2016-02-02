@@ -2,66 +2,61 @@ import Express from 'express';
 import Http from 'http';
 import Io from 'socket.io';
 import Path from 'path';
-
-function generateUUID() {
-    var d = new Date().getTime();
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = (d + Math.random()*16)%16 | 0;
-        d = Math.floor(d/16);
-        return (c=='x' ? r : (r&0x3|0x8)).toString(16);
-    });
-    return uuid;
-};
-
-function newRoom (roomList) {
-  const newId = generateUUID();
-  const room = {id: newId, p1: true, p2: ''};
-  roomList.push(room);
-  return roomList;
-}
-
-function joinRoom (roomList, newRoomFn) {
-  const last = roomList.length - 1;
-  var room = roomList[last];
-  if (room && !room.p2) {
-    room.p2 = true;
-    roomList[last] = room;  
-  } else {
-    roomList = newRoomFn(roomList)
-  }
-  return roomList;
-}
-
-function lastRoomId (roomList) {
-  const last = roomList.length - 1;
-  return roomList[last].id;
-}
+import makeStore from './store';
+import uuid from 'uuid';
 
 export function startServer(store) {
 
   const app = new Express();
   const http = new Http.Server(app);
   const io = new Io(http);
-  var rooms = [];
-
 
   http.listen(3001, function() {
       console.log('listening on *:3001');
   });
+
   app.use(Express.static(Path.join(__dirname, 'public')));
 
   store.subscribe(
+  //here must select data only froom neened room
+  //i think its posible with add to store key: lastFiredRoom
+  // when smtn deal witch store, store must change this value
+  // for this i must wrap all func
+  //and sand data only from this room, and use: socket.to(lastFiredRoom)
     () => io.emit('state', store.getState().toJS())
   );
 
   io.on('connection', (socket) => {
-    var idForClient;
-    joinRoom(rooms, newRoom);
-    idForClient = lastRoomId(rooms);
-    socket.join(idForClient);
-    socket.emit('state', store.getState().toJS());
-    socket.emit('your id', idForClient);
-    socket.on('action', store.dispatch.bind(store));
-    console.log('player join in ' + idForClient);
+
+    socket.on('create', (roomId, playerId) => {
+      socket.to(roomId).emit('your room id', roomId);
+
+      socket.join(roomId);
+      store.dispatch({type: 'CREATE_ROOM', roomId: roomId, playerId: playerId});
+
+      console.log('room create: by player ' + playerId);
+      console.log(store.getState().toJS());
+
+      socket.to(roomId).emit('state', store.getState().toJS());
+      socket.to(roomId).emit('your room id', roomId);
+      socket.on('action', store.dispatch.bind(store));
+      console.log('new room ID: ' + roomId);
+    });
+
+    socket.on('join', (roomId, playerId) => {
+      socket.join(roomId);
+      store.dispatch({type: 'JOIN_ROOM', roomId: roomId, playerId: playerId});
+
+      console.log('room '+ roomId +' join: by player ' + playerId);
+      console.log(store.getState().toJS());
+
+      socket.join(roomId);
+      socket.to(roomId).emit('state', store.getState().toJS());
+      socket.to(roomId).emit('your room id', roomId);
+      store.dispatch({type: 'NEXT_TURN', roomId: roomId});
+      socket.on('action', store.dispatch.bind(store));
+      console.log('player connect to room ID: ' + roomId);
+    });
+
   });
 }

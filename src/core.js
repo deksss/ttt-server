@@ -2,35 +2,20 @@ import {List, Map} from 'immutable';
 
 export const INITIAL_STATE = Map();
 
-export function setPlayers(state, players) {
-  const list = List(players);
-  return state.set('players', list)
-              .set('initialPlayers', list);
-}
-
-
 const coin = function () {
   return Math.random() > 0.5;
 }
 
-export function nextTurn(state) {
-  var curPlayer = state.get('curPlayer') || '';
-  const p1 = state.get('players').get(0).name || 'p1';
-  const p2 = state.get('players').get(1).name || 'p2';
+export function nextTurn(state, roomId) {
+  const curPlayer = state.get(roomId).get('curPlayer') || '';
+  const p1 = state.get(roomId).get('players').get(0).get('name') || 'P1';
+  const p2 = state.get(roomId).get('players').get(1).get('name') || 'P2';
 
-  if (!curPlayer) {
-    if (coin()) {
-      return state.set('curPlayer', p1);
-    }
-    else {
-      return state.set('curPlayer', p2)
-    }
+  if ((!curPlayer && coin()) || curPlayer === p2) {
+    return state.setIn([roomId, 'curPlayer'], p1);
   }
-  else if (curPlayer === p1) {
-    return state.set('curPlayer', p2);
-  }
-  else {
-    return state.set('curPlayer', p1);
+  else  {
+    return state.setIn([roomId, 'curPlayer'], p2);
   }
 }
 
@@ -38,30 +23,49 @@ export function restart(state) {
   return state;
 }
 
-export function playerStart(state, playerId) {
-  var players = state.get('players').toArray();
-  for (var i = 0; i < players.length; i++) {
-    if( players[i].id === '' ) {
-      players[i].id = playerId;
-      players[i].ready = true;
-      break;
-    } else if (players[i].id === playerId) {
-      break;
-    }
+export function playerStart(state, roomId, playerId) {
+  console.log(playerId + ', room:' + roomId);
+  console.log(state);
+  var players = state.get(roomId).get('players');
+  console.log('plrs:' + players);
+  var newState;
+  var allReady;
+
+  if (players.get(0).get('id') === playerId) {
+    newState = state.setIn([roomId, 'players', 0, 'ready'], true);
+  } else if (players.get(0).get('id') === playerId) {
+    newState = state.setIn([roomId, 'players', 1, 'ready'], true);
+  } else {
+    newState = state;
   }
-    return setReady(state.merge(
-      Map({'players' : List(players)})), playerId);
+  // here must be the error
+  allReady = newState.get(roomId).get('players').get(0).get('ready') +
+             newState.get(roomId).get('players').get(1).get('ready');
+
+  if (allReady) {
+    return startGame(newState, roomId);
+  } else {
+    return newState;
+  }
 }
 
-export function setReady(state, playerId) {
-  let ready = true;
-  var players = state.get('players').toArray();
-  for (var i = 0; i < players.length; i++) {
-    if(players[i].ready === false) {
-      ready = false;
-      break;
-    }
+export function startGame(state, roomId) {
+  return state.setIn([roomId, 'ready'], true);
+}
+
+export function createRoom(state, roomId, playerId) {
+  console.log('p id: on create ' + playerId);
+  const p1 = Map({id: playerId, name: 'P1', ready: false});
+  const p2 = Map({id: '', name: 'P2', ready: false});
+  const newRoom = Map({players: List([p1, p2]), ready: false, curPlayer: ''});
+  return state.set(roomId, newRoom);
+}
+
+export function joinRoom(state, roomId, playerId) {
+  console.log('p1 join room (fn) ' + playerId);
+  if (!state.get(roomId).get('players').get(1).id) {
+    return state.setIn([roomId, 'players', 1, 'id'], playerId);
+  } else {
+    return state;
   }
-  return state.merge(
-      Map({'ready' : ready}));
 }

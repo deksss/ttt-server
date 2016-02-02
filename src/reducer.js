@@ -1,21 +1,20 @@
-import {setPlayers, nextTurn, restart, INITIAL_STATE, playerStart, setReady} from './core';
+import {nextTurn, restart, INITIAL_STATE, 
+       playerStart, starGame, createRoom, joinRoom} from './core';
 
 export default function reducer(state = INITIAL_STATE, action) {
   switch (action.type) {
-  case 'SET_PLAYERS':
-    return setPlayers(state, action.players);
   case 'NEXT_TURN':
-    return nextTurn(state);
+    return nextTurn(state, action.roomId);
   case 'RESTART':
-    return restart(state);
+    return restart(state, action.roomId);
   case 'PLAYER_START':
-    return playerStart(state, action.clientId);
-  case 'PLAYER_READY':
-    return setReady(state, action.clientId);
+    return playerStart(state, action.roomId, action.clientId);
+  case 'START_GAME':
+    return setReady(state, action.roomId, action.clientId);
   case 'CREATE_ROOM':
-    return createRoom(state, action.clientId);
+    return createRoom(state, action.roomId, action.playerId);
   case 'JOIN_ROOM':
-    return joinRoom(state, action.clientId, action.roomId);
+    return joinRoom(state, action.roomId, action.playerId);
   }
   return state;
 }
