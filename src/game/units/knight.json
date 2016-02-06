@@ -1,0 +1,9 @@
+{ "id": 3,
+  "name": "knight",
+  "hp": 5,
+  "atk": 1,
+  "direction": ["up", "dwn", "lft", "rht"],
+  "onStart": [],
+  "onTurn": [],
+  "onDied": []
+}

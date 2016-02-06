@@ -1,0 +1,9 @@
+{ "id": 4,
+  "name": "ram",
+  "hp": 5,
+  "atk": 1,
+  "direction": ["up", "dwn", "lft", "rht"],
+  "onStart": [],
+  "onTurn": [],
+  "onDied": []
+}
