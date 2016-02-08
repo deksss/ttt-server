@@ -1,6 +1,6 @@
 import {List, Map} from 'immutable';
 import {getUnitById, initUnits} from './units';
-
+import {generateDeck, getCard} from './deck';
 
 export function initData(state) {
   const UNIT_SRC = require('./units-list.json') || [];
@@ -59,8 +59,21 @@ export function playerStart(state, roomId, playerId) {
 }
 
 export function startGame(state, roomId) {
+  const P1 = 0;
+  const P2 = 1;
+  const p1data = state.get(roomId)
+                      .get('players')
+                      .get(P1).
+                       merge(Map(generateDeck(state, roomId, P1, 'comander-deck')));
+  const p2data = state.get(roomId)
+                      .get('players')
+                      .get(P2).
+                       merge(Map(generateDeck(state, roomId, P2, 'mage-deck')));
 
-  return state.setIn([roomId, 'ready'], true).setIn([roomId, 'players', 0, 'deck'], );
+  return state.setIn([roomId, 'field'], state.get('initField'))
+              .setIn([roomId, 'ready'], true)
+              .setIn([roomId, 'players', 0], p1data)
+              .setIn([roomId, 'players', 1], p2data);
 }
 
 
@@ -71,9 +84,6 @@ export function generateFieldAnimation () {
 export function calcDmg () {
 
 }
-
-
-
 
 export function setCard () {
 

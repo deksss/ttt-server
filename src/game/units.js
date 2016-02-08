@@ -1,9 +1,9 @@
-import {Map} from 'immutable';
+import {Map, List} from 'immutable';
 
 export function initUnits (unitsListSrc) {
-  return unitsListSrc.map(function (src) {
+  return List(unitsListSrc.map(function (src) {
     return Map(require(src));
-  });
+  }));
 }
 
 export function addUnitToList (state, src) {
@@ -16,5 +16,5 @@ export function addUnitToList (state, src) {
 };
 
 export function getUnitById (state, unitId) {
-  return state.get('units').get(unitId);
+  return state.get('units').find(value => value.get('id') === unitId);
 }

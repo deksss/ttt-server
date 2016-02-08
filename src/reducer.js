@@ -22,7 +22,7 @@ export default function reducer(state = INITIAL_STATE, action) {
   case 'SET_CARD':
     return setCard(state, action.roomId, action.cellId, action.playerId);
   case 'GENERATE_DECK':
-    return generaneDeck(state, action.roomId, action.deckId, action.playerId);
+    return generaneDeck(state, action.roomId, action.deckId, action.playerNumber);
   case 'GET_CARD':
     return getCard(state, action.roomId, action.deckId, action.playerId);
   case 'CAST_SPELL':

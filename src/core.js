@@ -2,7 +2,6 @@ import {List, Map} from 'immutable';
 
 export const INITIAL_STATE = Map();
 
-
 export function createRoom(state, roomId, playerId) {
   const p1 = Map({id: playerId, name: 'P1', ready: false});
   const p2 = Map({id: '', name: 'P2', ready: false});
