@@ -7,3 +7,7 @@ export function shuffleArray(array) {
     }
     return array;
 }
+
+export function coin () {
+  return Math.random() > 0.5;
+}

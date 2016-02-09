@@ -1,25 +1,24 @@
 import {List, Map} from 'immutable';
 import {getUnitById, initUnits} from './units';
 import {generateDeck, getCard} from './deck';
+import {coin} from '../utils';
+import {genereateNewFied} from './field';
 
 export function initData(state) {
   const UNIT_SRC = require('./units-list.json') || [];
-  const GAME_FIELD = [['empty', 'empty', 'empty'],
-                          ['empty', 'empty', 'empty'],
-                          ['empty', 'empty', 'empty']];
+  const GAME_FIELD = genereateNewFied();
   const DECK = List([]);
-  const HAND = Map({'1':'', '2':'', '3':'', '4':'', '5':''});
+  const HAND = List([]);
   const UNITS = initUnits(UNIT_SRC);
-
   return state.set('initField', GAME_FIELD)
               .set('initHand', HAND)
               .set('initDeck', DECK)
               .set('units', UNITS);
 }
 
-const coin = function () {
-  return Math.random() > 0.5;
-}
+export function chekWin () {
+
+};
 
 export function nextTurn(state, roomId) {
   const curPlayer = state.get(roomId).get('curPlayer') || '';
@@ -77,18 +76,5 @@ export function startGame(state, roomId) {
 }
 
 
-export function generateFieldAnimation () {
 
-}
 
-export function calcDmg () {
-
-}
-
-export function setCard () {
-
-}
-
-export function selectCard () {
-
-}

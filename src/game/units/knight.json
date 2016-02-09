@@ -2,7 +2,8 @@
   "name": "knight",
   "hp": 5,
   "atk": 1,
-  "direction": ["up", "dwn", "lft", "rht"],
+  "atkCount": 1,
+  "direction":["U", "D", "L", "R"],
   "onStart": [],
   "onTurn": [],
   "onDied": []
