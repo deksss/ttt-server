@@ -1,9 +1,10 @@
 { "id": "2",
   "name": "dualist",
-  "hp": 5,
-  "atk": 1,
+  "hp": 4,
+  "atk": 3,
   "atkCount": 1,
   "direction":["U", "D", "L", "R"],
+  "info": "test text",
   "onStart": [],
   "onTurn": [],
   "onDied": []

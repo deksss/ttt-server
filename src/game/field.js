@@ -33,16 +33,16 @@ function setCell(state, roomId, playerNumber, cellId) {
 
 function getNormalDirection (direct) {
 	const DIRECTIOINS = {'UL': {x:-1, y: -1}, 'U': {x: 0, y: -1}, 'U': {x: 1, y: -1},
-	              'L':  {x: -1, y: 0},  'R': {x: 1, y: 0},
+	              'L':  {x: -1, y: 0}, 'R': {x: 1, y: 0},
 	              'DL': {x:-1, y: 1}, 'D': {x: 0, y: 1}, 'DR': {x: 1, y: 1}};
-	const x = DIRECTIOINS[direct].x;
-	const y = DIRECTIOINS[direct].y;
+	const x = DIRECTIOINS[direct].x + cell.x;
+	const y = DIRECTIOINS[direct].y + cell.y;
 	const id = '' + x + y;
 	return {id, x, y};
 }
 
 function getTargetForAtk (field, cell) {
-  const normalizedDirects = cell.direct.map(getNormalDirection(direct));
+  const normalizedDirects = cell.direct.map(getNormalDirection(direct, cell));
 	const onlyLiveEnemy =  normalizedDirects.filter(function (direct) {
 		const targetCell = field[direct.id];
 	  if (targetCell && !targetCell.died && targetCell.owner !== cell.owner) {
@@ -81,12 +81,11 @@ function calcHp(state, roomId) {
 	const newField = state.getIn([roomId, 'field']).toJS().map(function (cell) {
 		const id = cell.id;
     cell.hp = cell.hp - ataksAction.filter(action => action.targetId = id)
-		                         .reduce(function(prev, next) {
-                               return prev.dmg + next.dmg;
+		                         .reduce(function(prev, currentValue) {
+                                return prev + currentValue.dmg;
                               });
 	  return cell;
 	});
-
 	return state.setIn([roomId, 'prevField'], state.getIn([roomId, 'field']))
 	            .setIn([roomId, 'field'], List(newField));
 }

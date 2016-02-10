@@ -1,7 +1,7 @@
 import { INITIAL_STATE, createRoom, joinRoom} from './core';
-import {playerStart, starGame, nextTurn, restart,
-  generateFieldAnimation, calcDmg, getCard,generaneDeck,
-  castSpell, setCard, selectCard, initData} from  './game/game';
+import {playerStart, starGame, nextTurn, restart, initData} from  './game/game';
+import {getCard, selectCard} from  './game/deck';
+import {calcDmg, setCard} from  './game/field';
 
 export default function reducer(state = INITIAL_STATE, action) {
   switch (action.type) {
@@ -18,11 +18,11 @@ export default function reducer(state = INITIAL_STATE, action) {
   case 'JOIN_ROOM':
     return joinRoom(state, action.roomId, action.playerId);
   case 'SELECT_CARD':
-    return selectCard(state, action.roomId, action.cardId, action.playerId);
+    return selectCard(state, action.roomId, action.playerNumber, action.cardId);
   case 'SET_CARD':
-    return setCard(state, action.roomId, action.cellId, action.playerId);
+    return setCard(state, action.roomId, action.playerNumber, action.cellId);
   case 'GENERATE_DECK':
-    return generaneDeck(state, action.roomId, action.deckId, action.playerNumber);
+    return generaneDeck(state, action.roomId, action.playerNumber, action.deckId);
   case 'GET_CARD':
     return getCard(state, action.roomId, action.deckId, action.playerId);
   case 'CAST_SPELL':

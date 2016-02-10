@@ -8,9 +8,12 @@ export function generateDeck (state, roomId, playerNumber, deckId) {
   const START_CARD_COUNT = 3;
   const deckUnitIds = require('./deck/' + deckId +'.json');
   const deck = shuffleArray(deckUnitIds.map(unitId => getUnitById(state, unitId)));
-  const hand = deck.splice(0, START_CARD_COUNT);
+  const hand = deck.splice(0, START_CARD_COUNT).map( function(unit, index) {
+    let result = unit.set('cardId', index);
+  	return result;
+  }  );
 
-  return {'deck': deck, 'hand': hand};
+  return {'deck': List(deck), 'hand': List(hand)};
 }
 
 export function getCard (state, roomId, playerNumber, count = 1) {
@@ -35,7 +38,7 @@ export function getCard (state, roomId, playerNumber, count = 1) {
 }
 
 function selectValidation(data) {
-  if (data.roomId && data.selectedCard && data.playerNumber) {
+  if (data.selectedCard) {
     return true;   
   } else {
   	return false; 
@@ -43,16 +46,16 @@ function selectValidation(data) {
 }
 
 export function selectCard(state, roomId, playerNumber, cardId) {
+  console.log('roomId '+ roomId);
+  console.log('playerNumber ' + playerNumber);
+  console.log('cardId '+ cardId);
   const data = {};  	
-  data.selectedCard = state.get(roomId)
-                            .get('players')
-                            .get(playerNumber)
-                            .get('hand')
-                            .get(cardId) || false;
+  data.selectedCard = state.getIn([roomId, 'players', playerNumber, 'hand'])
+                           .find(card => card.get('cardId') === cardId);
   data.roomId = roomId || false;
   data.playerNumber = playerNumber || false;  
-
-  if (selectCard && selectValidation(data)) {
+  if (selectValidation(data)) {
+  console.log('card:  '+ data.selectedCard);
     return state.setIn([roomId, 'players', playerNumber, 'selectedCard'], data.selectedCard)
                 .setIn([roomId, 'players', playerNumber, 'canSetCards'], 0);
   } else {
