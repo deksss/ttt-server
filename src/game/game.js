@@ -26,11 +26,15 @@ export function nextTurn(state, roomId) {
   const p2 = state.get(roomId).get('players').get(1).get('name') || 'P2';
 
   if ((!curPlayer && coin()) || curPlayer === p2) {
-    return state.setIn([roomId, 'curPlayer'], p1);
+    return state.setIn([roomId, 'curPlayer'], p1)
+                .setIn([roomId, 'players', 0, 'canSetCards'], true)
+                .setIn([roomId, 'players', 1, 'canSetCards'], false);
   }
   else  {
-    return state.setIn([roomId, 'curPlayer'], p2);
-  }
+    return state.setIn([roomId, 'curPlayer'], p2)
+                .setIn([roomId, 'players', 1, 'canSetCards'], true)
+                .setIn([roomId, 'players', 0, 'canSetCards'], false);  
+  } 
 }
 
 export function restart(state) {

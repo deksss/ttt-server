@@ -21,7 +21,8 @@ export function getCard (state, roomId, playerNumber, count = 1) {
   const handCardCount = state.getIn([roomId, 'players', playerNumber, 'hand']).count();
 
   if (!deck.isEmpty() && handCardCount <= MAXCARDINHAND) {
-    const newHand = state.getIn([roomId, 'players', playerNumber, 'hand']).push(deck.last());	
+    const newHand = state.getIn([roomId, 'players', playerNumber, 'hand'])
+                         .push(deck.last().set('cardId', handCardCount+1));	
     const newDeck = oldDeck.pop(); 	 
     if (count<=1) {
       return state.setIn([roomId, 'players', playerNumber, 'hand'], newHand)
@@ -56,8 +57,7 @@ export function selectCard(state, roomId, playerNumber, cardId) {
   data.playerNumber = playerNumber || false;  
   if (selectValidation(data)) {
   console.log('card:  '+ data.selectedCard);
-    return state.setIn([roomId, 'players', playerNumber, 'selectedCard'], data.selectedCard)
-                .setIn([roomId, 'players', playerNumber, 'canSetCards'], 0);
+    return state.setIn([roomId, 'players', playerNumber, 'selectedCard'], data.selectedCard);
   } else {
     return state;
   }

@@ -14,20 +14,36 @@ export function genereateNewFied () {
 	return List(gameFieldId);
 }
 
-function setCell(state, roomId, playerNumber, cellId) {
+function decNumb(card, deletetIndex) {
+	let index = card.get('cardId');
+	if (index >= deletetIndex) {
+		return index - 1;
+	} else {
+		return index;
+	}
+}
+
+export function setCard(state, roomId, playerNumber, cellId) {
 	const playerData = state.get(roomId).get('players').get(playerNumber);
-	const playerSelectedCard = playerData.get('selectedCard') || false;
+	const canSet = playerData.get('canSetCards');
+	const selectedCard = playerData.get('selectedCard') || false;
 	const cell = state.get(roomId)
 	                  .get('field')
 	                  .find(value => value.get('id') === cellId) || false;
-	const cellIndex = cell.get('index');
-	if (cell && cell.free && playerSelectedCard) {
-		return state.setIn([roomId, 'field', cellIndex, 'unit'], playerSelectedCard)
+	const cellIndex = cell.get('index') || false;
+	const deleteIndex = selectedCard.get('cardId');
+	console.log('delete:' + deleteIndex);
+	if (cell && cell.get('free') && selectedCard && canSet) {
+		return state.setIn([roomId, 'field', cellIndex, 'unit'], selectedCard)
+		            .setIn([roomId, 'field', cellIndex, 'owner'], playerNumber)
 		            .setIn([roomId, 'field', cellIndex, 'free'], false)
 		            .setIn([roomId, 'players', playerNumber, 'selectedCard'], '')
-		            .setIn([roomId, 'field', cellIndex, 'owner'], playerNumber);
+		            .setIn([roomId, 'players', playerNumber, 'canSetCards'], false)
+		            .deleteIn([roomId, 'players', playerNumber, 'hand', deleteIndex]);
+		            //.updateIn([roomId, 'players', playerNumber, 'hand'], 
+		            //	      card => card.set('cardId', decNumb(card, deleteIndex)));
 	} else {
-		return false;
+		return state;
 	}
 }
 

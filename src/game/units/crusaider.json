@@ -5,6 +5,7 @@
   "atkCount": 1,
   "direction":["U", "D", "L", "R"],
   "info": "test text",
+  "ready":  "false",
   "onStart": [],
   "onTurn": [],
   "onDied": []
