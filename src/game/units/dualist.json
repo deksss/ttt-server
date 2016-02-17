@@ -4,8 +4,9 @@
   "atk": 3,
   "atkCount": 1,
   "direction":["U", "D", "L", "R"],
-  "ready":  "false",
+  "ready":  false,
   "info": "test text",
+  "sprite": "dualist", 
   "onStart": [],
   "onTurn": [],
   "onDied": []

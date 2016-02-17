@@ -6,106 +6,266 @@ export function genereateNewFied () {
 		function (value, index) {
 			return Map({index: index,
 				          id: value,
-									x: value[0],
-									y: value[1],
+									x: value[1],
+									y: value[0],
 									free: true,
 									owner: ''});
 });
 	return List(gameFieldId);
 }
 
-function decNumb(card, deletetIndex) {
-	let index = card.get('cardId');
-	if (index >= deletetIndex) {
-		return index - 1;
-	} else {
-		return index;
-	}
-}
 
 export function setCard(state, roomId, playerNumber, cellId) {
 	const playerData = state.get(roomId).get('players').get(playerNumber);
-	const canSet = playerData.get('canSetCards');
 	const selectedCard = playerData.get('selectedCard') || false;
 	const cell = state.get(roomId)
 	                  .get('field')
 	                  .find(value => value.get('id') === cellId) || false;
-	const cellIndex = cell.get('index') || false;
-	const deleteIndex = selectedCard.get('cardId');
-	console.log('delete:' + deleteIndex);
-	if (cell && cell.get('free') && selectedCard && canSet) {
-		return state.setIn([roomId, 'field', cellIndex, 'unit'], selectedCard)
+	const cellIndex = cell.get('index');
+	const delIndx = selectedCard.get('id');
+	if (cell.get('free') && selectedCard && playerData.get('canSetCards')) {
+		return state.setIn([roomId, 'field', cellIndex, 'unit'], selectedCard.get('unit'))
 		            .setIn([roomId, 'field', cellIndex, 'owner'], playerNumber)
 		            .setIn([roomId, 'field', cellIndex, 'free'], false)
-		            .setIn([roomId, 'players', playerNumber, 'selectedCard'], '')
+		            .setIn([roomId, 'players', playerNumber, 'selectedCard'], null)
 		            .setIn([roomId, 'players', playerNumber, 'canSetCards'], false)
-		            .deleteIn([roomId, 'players', playerNumber, 'hand', deleteIndex]);
-		            //.updateIn([roomId, 'players', playerNumber, 'hand'], 
-		            //	      card => card.set('cardId', decNumb(card, deleteIndex)));
+		            .setIn([roomId, 'players', playerNumber, 'hand', delIndx, 'unit'], null);
 	} else {
 		return state;
 	}
 }
 
-function getNormalDirection (direct) {
-	const DIRECTIOINS = {'UL': {x:-1, y: -1}, 'U': {x: 0, y: -1}, 'U': {x: 1, y: -1},
-	              'L':  {x: -1, y: 0}, 'R': {x: 1, y: 0},
-	              'DL': {x:-1, y: 1}, 'D': {x: 0, y: 1}, 'DR': {x: 1, y: 1}};
-	const x = DIRECTIOINS[direct].x + cell.x;
-	const y = DIRECTIOINS[direct].y + cell.y;
-	const id = '' + x + y;
-	return {id, x, y};
+function clearDeathCards (state, roomId) {
+	return state.setIn([roomId, 'field'], 
+		               state.getIn([roomId, 'field']).map(function (cell) {
+		                 if (cell.get('died')) {
+			               return cell.set('died', false)
+			                          .set('free', true)
+			                          .set('owner', '')
+					                  .set('unit', false);
+		                 } else {
+			               return cell;
+		                 }
+	             }))
+	            .setIn([roomId, 'ataksAction'], List([]));
+}
+
+function normalizeDirects (cell, field) {
+  const DIRECTIOINS = {'UL': {x:-1, y: -1}, 
+	  'U': {x: 0, y: -1}, 
+	  'UR': {x: 1, y: -1},
+	  'L':  {x: -1, y: 0}, 
+	  'R': {x: 1, y: 0},
+	  'DL': {x:-1, y: 1}, 
+	  'D': {x: 0, y: 1}, 
+	  'DR': {x: 1, y: 1}};
+
+  return cell.getIn(['unit', 'direction']).map(direct => {
+		const x = Number(DIRECTIOINS[direct].x) + Number(cell.get('x'));
+		const y = Number(DIRECTIOINS[direct].y) + Number(cell.get('y'));
+		console.log('x: '+ x);
+        console.log('y: '+ y);
+		const correct = field.find(val => {
+			if (val.get('y') == y && val.get('x') == x) {
+				return true;
+			} else  {
+				return false;
+			}
+		  });
+		if (correct && correct.get('index')) {
+		  return Map({index: correct.get('index'), x: x, y: y});
+		}
+	}).filter(val => val);
 }
 
 function getTargetForAtk (field, cell) {
-  const normalizedDirects = cell.direct.map(getNormalDirection(direct, cell));
-	const onlyLiveEnemy =  normalizedDirects.filter(function (direct) {
-		const targetCell = field[direct.id];
-	  if (targetCell && !targetCell.died && targetCell.owner !== cell.owner) {
-			return true;
-		}	else {
-			return false;
-		}
-	});
-	return shuffleArray(onlyLiveEnemy).splice(0, 1);
-}
-
-function clearDeathCards (state, roomId) {
-	return state.updateIn([roomId, 'field'], function (cell) {
-		if (cell.get('died')) {
-			return cell.set('died', false)
-			           .set('free', true)
-			           .set('owner', '');
-		}
-	}).setIn([roomId, 'field', 'atakAction'], List([]));
+  const directs = normalizeDirects(cell, field);
+  console.log('norm directs:'+directs);
+  const onlyLiveEnemy =  List(directs.filter(direct => {
+    const targetCell = field.get(direct.get('index')) || false;
+	if (targetCell !== false && 
+		targetCell.get('owner') !== '' && 
+		targetCell.get('owner') !== cell.get('owner')) {
+	  return true;
+	}  else {
+	  return false;
+	}
+  }));
+  console.log('onlyLiveEnemy:'+onlyLiveEnemy);
+  if (onlyLiveEnemy && onlyLiveEnemy.count() > 0) {
+	return shuffleArray(onlyLiveEnemy.toArray())[0].get('index');
+	} else {
+	  return false;
+  }
 }
 
 function setAtk (state, roomId) {
-	const field = state.getIn([roomId, 'field']).toJS();
-	const ataksAction = field.map(function (cell) {
-		if (cell.atk && cell.direction && cell.owner !== '') {
-			return {targetId: getTargetForAtk(field, cell),
-				      atakerId: cell['id'],
-							dmg: cell['atk']};
+  const field = state.getIn([roomId, 'field']);
+  const ataksAction = field.map(function (cell) {
+    if (cell.get('unit') && 
+		cell.getIn(['unit', 'atk']) && 
+		cell.getIn(['unit', 'ready'])  && 
+		cell.getIn(['unit', 'direction']) && 
+		cell.get('owner') !== '') {
+		  const targetIndex = getTargetForAtk(field, cell);
+		  console.log('targetIndex:'+targetIndex);
+		  if (targetIndex !== false) {
+		    return Map({targetIndex: targetIndex,
+					    atakerIndex: cell.get('index'),
+					    dmg: cell.getIn(['unit', 'atk'])});
+		  } else {
+		    return false;
+		  }
+		} else {
+		  return false;
 		}
 	});
-	return state.setIn([roomId, 'atakAction'], List(ataksAction));
+	return state.setIn([roomId, 'ataksAction'], 
+		               List(ataksAction).filter(val => val !== false));
+}
+
+function chekRow(onlyPlyerCell, cell) {
+  return chekNeighbor(onlyPlyerCell, cell, 'x');
+}
+
+function chekCol(onlyPlyerCell, cell) {
+  return chekNeighbor(onlyPlyerCell, cell, 'y')
+}
+
+function chekNeighbor(onlyPlyerCell, cell, cordName) {
+  const cord = cell.get(cordName);
+  const findNeighbor = onlyPlyerCell.filter(cell => cell.get(cordName) === cord);
+	if (findNeighbor.count() > 2) {
+		return true;
+	}	else {
+		return false;
+	}
+}
+
+function chekDiag1(onlyPlyerCell, cell) {
+	const player = cell.owner;
+	if (cell.x === cell.y && onlyPlyerCell[0].onwner === player
+	   && onlyPlyerCell[4].onwner === player
+	   && onlyPlyerCell[8].onwner === player ) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function chekDiag2(onlyPlyerCell, cell) {
+	const player = cell.owner;
+	if ((cell.index === 6 || cell.index === 4 || cell.index === 2)
+	   && onlyPlyerCell[2].onwner === player
+	   && onlyPlyerCell[4].onwner === player
+	   && onlyPlyerCell[6].onwner === player ) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function findAtakers(field, playerNumber) {
+  const onlyPlyerCell = field.filter(cell => cell.get('owner') === playerNumber);
+  const rowResult = field.filter(cell => chekRow(onlyPlyerCell, cell));
+  const colResult = field.filter(cell => chekCol(onlyPlyerCell, cell));
+//	const diag1Result = field.filter(cell => chekDiag1(onlyPlyerCell, cell));
+//	const diag2Result = field.filter(cell => chekDiag2(onlyPlyerCell, cell));
+	if (rowResult.count() > 2) {
+		return rowResult;
+	} else if (colResult.count() > 2) {
+    return colResult;
+//	} else if (diag1Result.length > 2) {
+//    return diag1Result;
+//	} else  if (diag2Result.length > 2) {
+//    return diag2Result;
+	} else {
+		return [];
+	}
+}
+
+function findPlayersAtkCell (state, roomId) {
+	const field = state.getIn([roomId, 'field']);
+	return state.setIn([roomId, "players", 0, 'atak'], findAtakers(field, 0))
+	            .setIn([roomId, "players", 1, 'atak'], findAtakers(field, 1));
+}
+
+function calcTargetDmg (cellAtk) {
+  const dmg =  cellAtk.reduce(function(prev, currentValue) {
+		 return prev.set('dmg', prev.get('dmg' ) + currentValue.get('dmg'));
+	 });
+  console.log('dmg: ' + dmg.get('dmg'));
+	 return dmg.get('dmg');
+}
+
+
+function callOneCellHp (feild, ataksAction, cell) {
+  var cellAtk;	
+  const index = cell.get('index');
+  if (cell.get('unit') && cell.getIn(['unit', 'hp'])) {
+    cellAtk = ataksAction.filter(function (action) {
+	  if(action.get('targetIndex') == index)  {
+	    return true;
+	  } else {  
+		return false;
+	  }
+	});
+			console.log('cellAtk '+ cellAtk);
+  }			
+  if (cellAtk && cellAtk.count() > 0) {
+  	const newHP = cell.getIn(['unit', 'hp']) - calcTargetDmg(cellAtk);
+  	console.log(newHP);
+    const cellResult =  cell.setIn(['unit', 'hp'],  newHP); 
+    return cellResult.set('died', chekDied(cellResult));         
+  } else {
+  	return cell.set('died', chekDied(cell));
+  }
+}
+
+function chekDied (cell) {
+	if (cell.get('unit') && 
+		cell.getIn(['unit', 'hp']) 
+		&& cell.getIn(['unit', 'hp']) < 1) {
+		console.log('died found');
+		return true;
+	} else {
+		return false;
+	}
 }
 
 function calcHp(state, roomId) {
-	const ataksAction = state.getIn([roomId, 'atakAction']);
-	const newField = state.getIn([roomId, 'field']).toJS().map(function (cell) {
-		const id = cell.id;
-    cell.hp = cell.hp - ataksAction.filter(action => action.targetId = id)
-		                         .reduce(function(prev, currentValue) {
-                                return prev + currentValue.dmg;
-                              });
-	  return cell;
+	const ataksAction = state.getIn([roomId, 'ataksAction']);
+	const oldField = state.getIn([roomId, 'field']);
+	const newField = oldField.map(function (cell) {
+      return callOneCellHp(oldField, ataksAction, cell);
 	});
 	return state.setIn([roomId, 'prevField'], state.getIn([roomId, 'field']))
 	            .setIn([roomId, 'field'], List(newField));
 }
 
+function updateCellReady (cell) {
+  if (cell.get('unit')) {
+    return cell.setIn(['unit','ready'], true);
+  } else {
+    return cell;
+  }
+}
+
+
+function setCardsReady(state, roomId) {
+  const oldField = state.getIn([roomId, 'field']);	
+  return state.setIn([roomId, 'field'], 
+  	                 oldField.map(cell => updateCellReady(cell)));
+}
+
 export function fieldCalc (state, roomId) {
-	return calcHp(setAtk(clearDeathCards(state, roomId)));
+  if (state.getIn([roomId, 'field'])) {
+	  return findPlayersAtkCell(
+			   setCardsReady(
+			     calcHp(
+				   setAtk(
+				     clearDeathCards(state, roomId), roomId), roomId), roomId), roomId);
+  } else {
+    return state;
+  }
 }

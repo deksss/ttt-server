@@ -1,1 +1,6 @@
-["./units/crusaider.json", "./units/dualist.json", "./units/knight.json", "./units/ram.json", "./units/swordsman.json"]
+["./units/basic-assassin.json",
+  "./units/dualist.json",
+  "./units/knight.json",
+  "./units/ram.json",
+  "./units/swordsman.json",
+  "./units/dog.json"]
