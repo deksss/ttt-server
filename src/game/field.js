@@ -180,7 +180,7 @@ function findAtakers(field, playerNumber) {
 //	} else  if (diag2Result.length > 2) {
 //    return diag2Result;
 	} else {
-		return [];
+		return List([]);
 	}
 }
 

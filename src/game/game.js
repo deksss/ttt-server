@@ -8,11 +8,11 @@ export function initData(state) {
   const UNIT_SRC = require('./units-list.json') || [];
   const GAME_FIELD = genereateNewFied();
   const DECK = List([]);
-  const HAND = List([{id:1, card:null},
-    Map({id:2, card:null}),
-    Map({id:3, card:null}),
-    Map({id:4, card:null}),
-    Map({id:5, card:null})]);
+  const HAND = List([{id:1, unit: null},
+    Map({id: 2, unit: null}),
+    Map({id: 3, unit: null}),
+    Map({id: 4, unit: null}),
+    Map({id: 5, unit: null})]);
   const UNITS = initUnits(UNIT_SRC);
   return state.set('initField', GAME_FIELD)
               .set('initHand', HAND)
@@ -27,8 +27,8 @@ export function chekWin () {
 function dmgOnePlayer (state, roomId, player) {
   const targerPlayer = Number(!player);
   const atak = state.get(roomId).get('players').get(player).get('atak');
-  if (atak && atak.length > 2) {
-    var atakOnlyDmg = atak.map(atk => atk.unit.atk);
+  if (atak && atak.count() > 2) {
+    var atakOnlyDmg = atak.map(atk => atk.getIn(['unit', 'atk']));
     const dmg = atakOnlyDmg.reduce( function (prev, currentValue) {
       return prev + currentValue;
     });
@@ -50,14 +50,14 @@ export function nextTurn(state, roomId) {
   const p2 = state.get(roomId).get('players').get(1).get('name') || 'P2';
 
   if ((!curPlayer && coin()) || curPlayer === p2) {
-    return dmgPlayers(fieldCalc(state.setIn([roomId, 'curPlayer'], p1)
+    return getCard(dmgPlayers(fieldCalc(state.setIn([roomId, 'curPlayer'], p1)
                 .setIn([roomId, 'players', 0, 'canSetCards'], true)
-                .setIn([roomId, 'players', 1, 'canSetCards'], false), roomId), roomId);
+                .setIn([roomId, 'players', 1, 'canSetCards'], false), roomId), roomId), roomId, 1);
   }
   else  {
-    return dmgPlayers(fieldCalc(state.setIn([roomId, 'curPlayer'], p2)
+    return getCard(dmgPlayers(fieldCalc(state.setIn([roomId, 'curPlayer'], p2)
                 .setIn([roomId, 'players', 1, 'canSetCards'], true)
-                .setIn([roomId, 'players', 0, 'canSetCards'], false), roomId), roomId);
+                .setIn([roomId, 'players', 0, 'canSetCards'], false), roomId), roomId), roomId, 0);
   }
 }
 

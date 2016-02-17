@@ -15,25 +15,44 @@ export function generateDeck (state, roomId, playerNumber, deckId) {
   return {'deck': List(deck), 'hand': state.get('initHand').merge(List(hand))};
 }
 
+
 export function getCard (state, roomId, playerNumber, count = 1) {
-  const deck = state.getIn([roomId, 'players', playerNumber, 'deck']);
-  const handCardCount = state.getIn([roomId, 'players', playerNumber, 'hand']).count();
+  if (state.getIn([roomId, 'players', playerNumber, 'deck'])) {
+    const deck = state.getIn([roomId, 'players', playerNumber, 'deck']);
+    const hand = state.getIn([roomId, 'players', playerNumber, 'hand']);  
+    const freeCardSlot = hand.find(card => card.get('unit') === null);
+    var freeId;                                               
+   
+    if (!deck.isEmpty() && freeCardSlot) {  
+      freeId = freeCardSlot.get('id'); 
+      if (count <= 1) {
+        return state.setIn([roomId, 'players', playerNumber, 'hand'], 
+                           hand.map( card => {
+                              if (card.get('id') === freeId) {
+                                return card.set('unit',  deck.last()); 
+                              } else {
+                                return card;
+                              }
+                            }))
+                     .setIn([roomId, 'players', playerNumber, 'deck'], deck.pop());
+      } else {
+        getCard(state.setIn([roomId, 'players', playerNumber, 'hand'], 
+                            hand.map( card => {
+                              if (card.get('id') === freeId) {
+                                return card.set('unit',  deck.last()); 
+                              } else {
+                                return card;
+                              }
+                            }))
+                     .setIn([roomId, 'players', playerNumber, 'deck'], deck.pop()), 
+                           roomId, playerNumber, count - 1);
+      }
 
-  if (!deck.isEmpty() && handCardCount <= MAXCARDINHAND) {
-    const newHand = state.getIn([roomId, 'players', playerNumber, 'hand'])
-                         .push(deck.last().set('id', handCardCount+1));
-    const newDeck = oldDeck.pop();
-    if (count<=1) {
-      return state.setIn([roomId, 'players', playerNumber, 'hand'], newHand)
-                  .setIn([roomId, 'players', playerNumber, 'deck'], newDeck);
-    } else {
-      getCard(state.setIn([roomId, 'players', playerNumber, 'hand'], newHand)
-                   .setIn([roomId, 'players', playerNumber, 'deck'], newDeck)
-                   , roomId, playerNumber, count - 1);
+    }	else {
+  	  return state;
     }
-
-  }	else {
-  	return state;
+  } else {
+    return state;
   }
 }
 
