@@ -142,43 +142,42 @@ function chekNeighbor(onlyPlyerCell, cell, cordName) {
 	}
 }
 
-function chekDiag1(onlyPlyerCell, cell) {
-	const player = cell.owner;
-	if (cell.x === cell.y && onlyPlyerCell[0].onwner === player
-	   && onlyPlyerCell[4].onwner === player
-	   && onlyPlyerCell[8].onwner === player ) {
-		return true;
+function chekDiag(onlyPlyerCell) {
+	const diag1 = onlyPlyerCell.filter(cell => {
+		if(cell.get('index') === 0 || cell.get('index') === 4 || cell.get('index') === 8){ 
+			return true;
+		  } else {
+			return false;
+		}
+	});
+	const diag2 = onlyPlyerCell.filter(cell => {
+		if(cell.get('index') === 2 || cell.get('index') === 4 || cell.get('index') === 6){ 
+			return true;
+		  } else {
+			return false;
+		}
+	});
+	if (diag1.count() === 3) {
+		return diag1;
+	} else if  (diag2.count() === 3 ) {
+	  return diag2;
 	} else {
-		return false;
+	  return false;
 	}
 }
 
-function chekDiag2(onlyPlyerCell, cell) {
-	const player = cell.owner;
-	if ((cell.index === 6 || cell.index === 4 || cell.index === 2)
-	   && onlyPlyerCell[2].onwner === player
-	   && onlyPlyerCell[4].onwner === player
-	   && onlyPlyerCell[6].onwner === player ) {
-		return true;
-	} else {
-		return false;
-	}
-}
 
 function findAtakers(field, playerNumber) {
   const onlyPlyerCell = field.filter(cell => cell.get('owner') === playerNumber);
   const rowResult = field.filter(cell => chekRow(onlyPlyerCell, cell));
   const colResult = field.filter(cell => chekCol(onlyPlyerCell, cell));
-//	const diag1Result = field.filter(cell => chekDiag1(onlyPlyerCell, cell));
-//	const diag2Result = field.filter(cell => chekDiag2(onlyPlyerCell, cell));
+  const diagResult = chekDiag(onlyPlyerCell);
 	if (rowResult.count() > 2) {
 		return rowResult;
 	} else if (colResult.count() > 2) {
-    return colResult;
-//	} else if (diag1Result.length > 2) {
-//    return diag1Result;
-//	} else  if (diag2Result.length > 2) {
-//    return diag2Result;
+      return colResult;
+	} else if (diagResult) {
+      return diagResult;
 	} else {
 		return List([]);
 	}
