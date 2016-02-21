@@ -20,8 +20,19 @@ export function initData(state) {
               .set('units', UNITS);
 }
 
-export function chekWin () {
-
+export function chekWin (state, roomId) {
+  const roomStatePlayers = state.getIn([roomId, 'players']);
+  const p1HP = roomStatePlayers.getIn([ 0,  'hp']);
+  const p2HP = roomStatePlayers.getIn([ 1,  'hp']);
+  if (p1HP < 1 && p2HP > 0) {
+    return state.setIn([roomId, 'winner'], 'P2');
+  } else if (p2HP < 1 && p1HP > 0) {
+    return state.setIn([roomId, 'winner'], 'P1');
+  } else if (p1HP < 1 && p2HP < 1) {
+    return state.setIn([roomId, 'winner'], 'Draw!');
+  } else {
+    return state;
+  }
 };
 
 function dmgOnePlayer (state, roomId, player) {
@@ -50,14 +61,14 @@ export function nextTurn(state, roomId) {
   const p2 = state.get(roomId).get('players').get(1).get('name') || 'P2';
 
   if ((!curPlayer && coin()) || curPlayer === p2) {
-    return getCard(dmgPlayers(fieldCalc(state.setIn([roomId, 'curPlayer'], p1)
+    return chekWin(getCard(dmgPlayers(fieldCalc(state.setIn([roomId, 'curPlayer'], p1)
                 .setIn([roomId, 'players', 0, 'canSetCards'], true)
-                .setIn([roomId, 'players', 1, 'canSetCards'], false), roomId), roomId), roomId, 1);
+                .setIn([roomId, 'players', 1, 'canSetCards'], false), roomId), roomId), roomId, 1), roomId);
   }
   else  {
-    return getCard(dmgPlayers(fieldCalc(state.setIn([roomId, 'curPlayer'], p2)
+    return chekWin(getCard(dmgPlayers(fieldCalc(state.setIn([roomId, 'curPlayer'], p2)
                 .setIn([roomId, 'players', 1, 'canSetCards'], true)
-                .setIn([roomId, 'players', 0, 'canSetCards'], false), roomId), roomId), roomId, 0);
+                .setIn([roomId, 'players', 0, 'canSetCards'], false), roomId), roomId), roomId, 0), roomId);
   }
 }
 

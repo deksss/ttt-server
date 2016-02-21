@@ -35,8 +35,8 @@ export function setCard(state, roomId, playerNumber, cellId) {
 	}
 }
 
-function clearDeathCards (state, roomId) {
-	return state.setIn([roomId, 'field'], 
+function nextPrepeare (state, roomId) {
+	return state.setIn([roomId, 'field'],
 		               state.getIn([roomId, 'field']).map(function (cell) {
 		                 if (cell.get('died')) {
 			               return cell.set('died', false)
@@ -47,24 +47,23 @@ function clearDeathCards (state, roomId) {
 			               return cell;
 		                 }
 	             }))
-	            .setIn([roomId, 'ataksAction'], List([]));
+	            .setIn([roomId, 'ataksAction'], List([]))
+							.setIn([roomId, 'fieldAnimation'], List([]));
 }
 
 function normalizeDirects (cell, field) {
-  const DIRECTIOINS = {'UL': {x:-1, y: -1}, 
-	  'U': {x: 0, y: -1}, 
+  const DIRECTIOINS = {'UL': {x:-1, y: -1},
+	  'U': {x: 0, y: -1},
 	  'UR': {x: 1, y: -1},
-	  'L':  {x: -1, y: 0}, 
+	  'L':  {x: -1, y: 0},
 	  'R': {x: 1, y: 0},
-	  'DL': {x:-1, y: 1}, 
-	  'D': {x: 0, y: 1}, 
+	  'DL': {x:-1, y: 1},
+	  'D': {x: 0, y: 1},
 	  'DR': {x: 1, y: 1}};
 
   return cell.getIn(['unit', 'direction']).map(direct => {
 		const x = Number(DIRECTIOINS[direct].x) + Number(cell.get('x'));
 		const y = Number(DIRECTIOINS[direct].y) + Number(cell.get('y'));
-		console.log('x: '+ x);
-        console.log('y: '+ y);
 		const correct = field.find(val => {
 			if (val.get('y') == y && val.get('x') == x) {
 				return true;
@@ -73,27 +72,25 @@ function normalizeDirects (cell, field) {
 			}
 		  });
 		if (correct && correct.get('index')) {
-		  return Map({index: correct.get('index'), x: x, y: y});
+		  return Map({index: correct.get('index'), x: x, y: y, direct: direct});
 		}
 	}).filter(val => val);
 }
 
 function getTargetForAtk (field, cell) {
   const directs = normalizeDirects(cell, field);
-  console.log('norm directs:'+directs);
   const onlyLiveEnemy =  List(directs.filter(direct => {
     const targetCell = field.get(direct.get('index')) || false;
-	if (targetCell !== false && 
-		targetCell.get('owner') !== '' && 
-		targetCell.get('owner') !== cell.get('owner')) {
-	  return true;
-	}  else {
-	  return false;
-	}
+	  if (targetCell !== false &&
+		  targetCell.get('owner') !== '' &&
+		  targetCell.get('owner') !== cell.get('owner')) {
+	    return true;
+	  }  else {
+	    return false;
+	  }
   }));
-  console.log('onlyLiveEnemy:'+onlyLiveEnemy);
   if (onlyLiveEnemy && onlyLiveEnemy.count() > 0) {
-	return shuffleArray(onlyLiveEnemy.toArray())[0].get('index');
+	  return shuffleArray(onlyLiveEnemy.toArray())[0];
 	} else {
 	  return false;
   }
@@ -102,17 +99,18 @@ function getTargetForAtk (field, cell) {
 function setAtk (state, roomId) {
   const field = state.getIn([roomId, 'field']);
   const ataksAction = field.map(function (cell) {
-    if (cell.get('unit') && 
-		cell.getIn(['unit', 'atk']) && 
-		cell.getIn(['unit', 'ready'])  && 
-		cell.getIn(['unit', 'direction']) && 
+    if (cell.get('unit') &&
+		cell.getIn(['unit', 'atk']) &&
+		cell.getIn(['unit', 'ready'])  &&
+		cell.getIn(['unit', 'direction']) &&
 		cell.get('owner') !== '') {
-		  const targetIndex = getTargetForAtk(field, cell);
-		  console.log('targetIndex:'+targetIndex);
-		  if (targetIndex !== false) {
-		    return Map({targetIndex: targetIndex,
-					    atakerIndex: cell.get('index'),
-					    dmg: cell.getIn(['unit', 'atk'])});
+		  const target = getTargetForAtk(field, cell);
+
+			if (target) {
+		    return Map({targetIndex: target.get('index'),
+					         atakerIndex: cell.get('index'),
+					         dmg: cell.getIn(['unit', 'atk']),
+								   direct: target.get('direct')});
 		  } else {
 		    return false;
 		  }
@@ -120,7 +118,7 @@ function setAtk (state, roomId) {
 		  return false;
 		}
 	});
-	return state.setIn([roomId, 'ataksAction'], 
+	return state.setIn([roomId, 'ataksAction'],
 		               List(ataksAction).filter(val => val !== false));
 }
 
@@ -144,14 +142,14 @@ function chekNeighbor(onlyPlyerCell, cell, cordName) {
 
 function chekDiag(onlyPlyerCell) {
 	const diag1 = onlyPlyerCell.filter(cell => {
-		if(cell.get('index') === 0 || cell.get('index') === 4 || cell.get('index') === 8){ 
+		if(cell.get('index') === 0 || cell.get('index') === 4 || cell.get('index') === 8){
 			return true;
 		  } else {
 			return false;
 		}
 	});
 	const diag2 = onlyPlyerCell.filter(cell => {
-		if(cell.get('index') === 2 || cell.get('index') === 4 || cell.get('index') === 6){ 
+		if(cell.get('index') === 2 || cell.get('index') === 4 || cell.get('index') === 6){
 			return true;
 		  } else {
 			return false;
@@ -193,39 +191,34 @@ function calcTargetDmg (cellAtk) {
   const dmg =  cellAtk.reduce(function(prev, currentValue) {
 		 return prev.set('dmg', prev.get('dmg' ) + currentValue.get('dmg'));
 	 });
-  console.log('dmg: ' + dmg.get('dmg'));
 	 return dmg.get('dmg');
 }
 
 
 function callOneCellHp (feild, ataksAction, cell) {
-  var cellAtk;	
+  var cellAtk;
   const index = cell.get('index');
   if (cell.get('unit') && cell.getIn(['unit', 'hp'])) {
     cellAtk = ataksAction.filter(function (action) {
 	  if(action.get('targetIndex') == index)  {
 	    return true;
-	  } else {  
+	  } else {
 		return false;
 	  }
 	});
-			console.log('cellAtk '+ cellAtk);
-  }			
+  }
   if (cellAtk && cellAtk.count() > 0) {
   	const newHP = cell.getIn(['unit', 'hp']) - calcTargetDmg(cellAtk);
-  	console.log(newHP);
-    const cellResult =  cell.setIn(['unit', 'hp'],  newHP); 
-    return cellResult.set('died', chekDied(cellResult));         
+    const cellResult =  cell.setIn(['unit', 'hp'],  newHP);
+    return cellResult.set('died', chekDied(cellResult));
   } else {
   	return cell.set('died', chekDied(cell));
   }
 }
 
 function chekDied (cell) {
-	if (cell.get('unit') && 
-		cell.getIn(['unit', 'hp']) 
-		&& cell.getIn(['unit', 'hp']) < 1) {
-		console.log('died found');
+	if (cell.get('unit') &&
+		  cell.getIn(['unit', 'hp']) < 1) {
 		return true;
 	} else {
 		return false;
@@ -242,6 +235,16 @@ function calcHp(state, roomId) {
 	            .setIn([roomId, 'field'], List(newField));
 }
 
+function genAnimation(state, roomId) {
+	const ataksAction = state.getIn([roomId, 'ataksAction']);
+	const field = state.getIn([roomId, 'field']);
+	const animatedField = ataksAction.map(function (atak) {
+      return field.setIn([atak.get('targetIndex'), 'dmgGet'], atak.get('dmg'))
+			            .setIn([atak.get('atakerIndex'), 'atkDirect'], atak.get('direct') );
+	});
+	return state.setIn([roomId, 'fieldAnimation'], animatedField)
+}
+
 function updateCellReady (cell) {
   if (cell.get('unit')) {
     return cell.setIn(['unit','ready'], true);
@@ -252,18 +255,19 @@ function updateCellReady (cell) {
 
 
 function setCardsReady(state, roomId) {
-  const oldField = state.getIn([roomId, 'field']);	
-  return state.setIn([roomId, 'field'], 
+  const oldField = state.getIn([roomId, 'field']);
+  return state.setIn([roomId, 'field'],
   	                 oldField.map(cell => updateCellReady(cell)));
 }
 
 export function fieldCalc (state, roomId) {
   if (state.getIn([roomId, 'field'])) {
-	  return findPlayersAtkCell(
-			   setCardsReady(
+	  return genAnimation(
+		       findPlayersAtkCell(
+			     setCardsReady(
 			     calcHp(
 				   setAtk(
-				     clearDeathCards(state, roomId), roomId), roomId), roomId), roomId);
+				   nextPrepeare(state, roomId), roomId), roomId), roomId), roomId), roomId);
   } else {
     return state;
   }
