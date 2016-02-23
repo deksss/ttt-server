@@ -27,9 +27,9 @@ export function startServer(store) {
   );
 
   io.on('connection', (socket) => {
-
+    socket.emit('state', {rooms: store.getState().toJS().rooms});
     socket.on('create', (roomId, playerId) => {
-      socket.to(roomId).emit('your room id', roomId);
+      //socket.to(roomId).emit('your room id', roomId);
 
       socket.join(roomId);
       store.dispatch({type: 'CREATE_ROOM', roomId: roomId, playerId: playerId});

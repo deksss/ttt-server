@@ -17,7 +17,8 @@ export function initData(state) {
   return state.set('initField', GAME_FIELD)
               .set('initHand', HAND)
               .set('initDeck', DECK)
-              .set('units', UNITS);
+              .set('units', UNITS)
+              .set('rooms', List([]));
 }
 
 export function chekWin (state, roomId) {
