@@ -9,7 +9,7 @@ export function generateDeck (state, roomId, playerNumber, deckId) {
   const deckUnitIds = require('./deck/' + deckId +'.json');
   const deck = shuffleArray(deckUnitIds.map(unitId => getUnitById(state, unitId)));
   const hand = deck.splice(0, START_CARD_COUNT).map( function(unit, index) {
-  	return Map({id: index, unit: unit});
+  	return Map({id: index, unit: unit, new: true});
   }  );
 
   return {'deck': List(deck), 'hand': state.get('initHand').merge(List(hand))};
@@ -29,9 +29,10 @@ export function getCard (state, roomId, playerNumber, count = 1) {
         return state.setIn([roomId, 'players', playerNumber, 'hand'],
                            hand.map( card => {
                               if (card.get('id') === freeId) {
-                                return card.set('unit',  deck.last());
+                                return card.set('unit',  deck.last())
+                                           .set('new',  true);
                               } else {
-                                return card;
+                                return card.set('new', false);
                               }
                             }))
                      .setIn([roomId, 'players', playerNumber, 'deck'], deck.pop());
@@ -39,9 +40,10 @@ export function getCard (state, roomId, playerNumber, count = 1) {
         getCard(state.setIn([roomId, 'players', playerNumber, 'hand'],
                             hand.map( card => {
                               if (card.get('id') === freeId) {
-                                return card.set('unit',  deck.last());
+                                return card.set('unit',  deck.last())
+                                           .set('new',  true);
                               } else {
-                                return card;
+                                return card.set('new', false);
                               }
                             }))
                      .setIn([roomId, 'players', playerNumber, 'deck'], deck.pop()),
