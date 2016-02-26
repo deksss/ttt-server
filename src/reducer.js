@@ -14,9 +14,9 @@ export default function reducer(state = INITIAL_STATE, action) {
   case 'START_GAME':
     return setReady(state, action.roomId, action.clientId);
   case 'CREATE_ROOM':
-    return createRoom(state, action.roomId, action.playerId);
+    return createRoom(state, action.roomId, action.playerId, action.name);
   case 'JOIN_ROOM':
-    return joinRoom(state, action.roomId, action.playerId);
+    return joinRoom(state, action.roomId, action.playerId, action.name);
   case 'SELECT_CARD':
     return selectCard(state, action.roomId, action.playerNumber, action.id);
   case 'SET_CARD':

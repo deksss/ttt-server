@@ -28,11 +28,11 @@ export function startServer(store) {
 
   io.on('connection', (socket) => {
     socket.emit('state', {rooms: store.getState().toJS().rooms});
-    socket.on('create', (roomId, playerId) => {
+    socket.on('create', (roomId, playerId, name) => {
       //socket.to(roomId).emit('your room id', roomId);
 
       socket.join(roomId);
-      store.dispatch({type: 'CREATE_ROOM', roomId: roomId, playerId: playerId});
+      store.dispatch({type: 'CREATE_ROOM', roomId: roomId, playerId: playerId, name: name});
 
       console.log('room create: by player ' + playerId);
       console.log(store.getState().toJS());
@@ -43,9 +43,9 @@ export function startServer(store) {
       console.log('new room ID: ' + roomId);
     });
 
-    socket.on('join', (roomId, playerId) => {
+    socket.on('join', (roomId, playerId, name) => {
       socket.join(roomId);
-      store.dispatch({type: 'JOIN_ROOM', roomId: roomId, playerId: playerId});
+      store.dispatch({type: 'JOIN_ROOM', roomId: roomId, playerId: playerId, name: name});
 
       console.log('room '+ roomId +' join: by player ' + playerId);
       console.log(store.getState().toJS());
