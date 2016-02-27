@@ -14,11 +14,13 @@ export function initData(state) {
     Map({id: 4, unit: null}),
     Map({id: 5, unit: null})]);
   const UNITS = initUnits(UNIT_SRC);
+  const DECK_LIST = List(require('./basic-deck-list.json'));
   return state.set('initField', GAME_FIELD)
               .set('initHand', HAND)
               .set('initDeck', DECK)
               .set('units', UNITS)
-              .set('rooms', List([]));
+              .set('rooms', List([]))
+              .set('deckList', DECK_LIST);
 }
 
 export function chekWin (state, roomId) {
@@ -100,15 +102,19 @@ export function playerStart(state, roomId, playerId) {
 export function startGame(state, roomId) {
   const P1 = 0;
   const P2 = 1;
+  const p1DeckName = state.getIn([roomId, 'players', P1, 'deckName']) ;
+  const p2DeckName = state.getIn([roomId, 'players', P2, 'deckName']) ;
+  console.log('p1DeckName'+p1DeckName);
+    console.log('p2DeckName'+p2DeckName);
   const p1data = state.get(roomId)
                       .get('players')
                       .get(P1)
-                      .merge(Map(generateDeck(state, roomId, P1, 'comander-deck')))
+                      .merge(Map(generateDeck(state, p1DeckName)))
                       .set('hp', 20);
   const p2data = state.get(roomId)
                       .get('players')
                       .get(P2)
-                      .merge(Map(generateDeck(state, roomId, P2, 'mage-deck')))
+                      .merge(Map(generateDeck(state, p2DeckName)))
                       .set('hp', 20);
 
   return state.setIn([roomId, 'field'], state.get('initField'))

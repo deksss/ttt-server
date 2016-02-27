@@ -1,6 +1,6 @@
 import { INITIAL_STATE, createRoom, joinRoom} from './core';
 import {playerStart, starGame, nextTurn, restart, initData} from  './game/game';
-import {getCard, selectCard} from  './game/deck';
+import {getCard, selectCard, selectDeck} from  './game/deck';
 import {calcDmg, setCard} from  './game/field';
 
 export default function reducer(state = INITIAL_STATE, action) {
@@ -33,6 +33,8 @@ export default function reducer(state = INITIAL_STATE, action) {
     return generateFieldAnimation(state, action.roomId);
   case 'INIT_DATA':
     return initData(state);
+  case 'SELECT_DECK':
+    return selectDeck(state, action.roomId, action.playerNumber, action.deck);
   }
   return state;
 }

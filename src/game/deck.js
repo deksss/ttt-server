@@ -4,7 +4,9 @@ import {List, Map} from 'immutable';
 
 const MAXCARDINHAND = 5;
 
-export function generateDeck (state, roomId, playerNumber, deckId) {
+//lishnie parametry
+export function generateDeck (state, deckId) {
+  console.log('deckId ' +deckId);
   const START_CARD_COUNT = 3;
   const deckUnitIds = require('./deck/' + deckId +'.json');
   const deck = shuffleArray(deckUnitIds.map(unitId => getUnitById(state, unitId)));
@@ -15,6 +17,10 @@ export function generateDeck (state, roomId, playerNumber, deckId) {
   return {'deck': List(deck), 'hand': state.get('initHand').merge(List(hand))};
 }
 
+export function selectDeck(state, roomId, playerNumber, deck) {
+  console.log('try to set Deck!!!!' + deck +'palyer ' + playerNumber);
+  return state.setIn([roomId, 'players', playerNumber, 'deckName'], deck);
+}
 
 export function getCard (state, roomId, playerNumber, count = 1) {
   if (state.getIn([roomId, 'players', playerNumber, 'deck'])) {
