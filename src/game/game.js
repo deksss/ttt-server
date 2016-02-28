@@ -8,11 +8,11 @@ export function initData(state) {
   const UNIT_SRC = require('./units-list.json') || [];
   const GAME_FIELD = genereateNewFied();
   const DECK = List([]);
-  const HAND = List([{id:1, unit: null},
+  const HAND = List([{id:0, unit: null},
+    Map({id: 1, unit: null}),
     Map({id: 2, unit: null}),
     Map({id: 3, unit: null}),
-    Map({id: 4, unit: null}),
-    Map({id: 5, unit: null})]);
+    Map({id: 4, unit: null})]);
   const UNITS = initUnits(UNIT_SRC);
   const DECK_LIST = List(require('./basic-deck-list.json'));
   return state.set('initField', GAME_FIELD)
@@ -104,8 +104,7 @@ export function startGame(state, roomId) {
   const P2 = 1;
   const p1DeckName = state.getIn([roomId, 'players', P1, 'deckName']) ;
   const p2DeckName = state.getIn([roomId, 'players', P2, 'deckName']) ;
-  console.log('p1DeckName'+p1DeckName);
-    console.log('p2DeckName'+p2DeckName);
+
   const p1data = state.get(roomId)
                       .get('players')
                       .get(P1)

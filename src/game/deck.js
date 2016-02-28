@@ -6,11 +6,10 @@ const MAXCARDINHAND = 5;
 
 //lishnie parametry
 export function generateDeck (state, deckId) {
-  console.log('deckId ' +deckId);
   const START_CARD_COUNT = 3;
   const deckUnitIds = require('./deck/' + deckId +'.json');
   const deck = shuffleArray(deckUnitIds.map(unitId => getUnitById(state, unitId)));
-  const hand = deck.splice(0, START_CARD_COUNT).map( function(unit, index) {
+  const hand = deck.splice(0, START_CARD_COUNT).map(function(unit, index) {
   	return Map({id: index, unit: unit, new: true});
   }  );
 

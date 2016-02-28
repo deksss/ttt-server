@@ -71,7 +71,7 @@ function normalizeDirects (cell, field) {
 				return false;
 			}
 		  });
-		if (correct && correct.get('index')) {
+		if (correct && (correct.get('index') === 0 || correct.get('index'))) {
 		  return Map({index: correct.get('index'), x: x, y: y, direct: direct});
 		}
 	}).filter(val => val);
@@ -79,8 +79,11 @@ function normalizeDirects (cell, field) {
 
 function getTargetForAtk (field, cell) {
   const directs = normalizeDirects(cell, field);
+	var targetCell = false;
   const onlyLiveEnemy =  List(directs.filter(direct => {
-    const targetCell = field.get(direct.get('index')) || false;
+		if (field.get(direct.get('index')) || field.get(direct.get('index')) === 0) {
+		  targetCell = field.get(direct.get('index'));
+		};
 	  if (targetCell !== false &&
 		  targetCell.get('owner') !== '' &&
 		  targetCell.get('owner') !== cell.get('owner')) {
@@ -106,7 +109,7 @@ function setAtk (state, roomId) {
 		cell.get('owner') !== '') {
 		  const target = getTargetForAtk(field, cell);
 
-			if (target) {
+			if (target === 0 || target) {
 		    return Map({targetIndex: target.get('index'),
 					         atakerIndex: cell.get('index'),
 					         dmg: cell.getIn(['unit', 'atk']),
