@@ -22,14 +22,13 @@ export function setCard(state, roomId, playerNumber, cellId) {
 	                  .get('field')
 	                  .find(value => value.get('id') === cellId) || false;
 	const cellIndex = cell.get('index');
-	const delIndx = selectedCard.get('id');
 	if (cell.get('free') && selectedCard && playerData.get('canSetCards')) {
 		return state.setIn([roomId, 'field', cellIndex, 'unit'], selectedCard.get('unit'))
 		            .setIn([roomId, 'field', cellIndex, 'owner'], playerNumber)
 		            .setIn([roomId, 'field', cellIndex, 'free'], false)
 		            .setIn([roomId, 'players', playerNumber, 'selectedCard'], null)
 		            .setIn([roomId, 'players', playerNumber, 'canSetCards'], false)
-		            .setIn([roomId, 'players', playerNumber, 'hand', delIndx, 'unit'], null);
+		            .setIn([roomId, 'players', playerNumber, 'hand', selectedCard.get('id'), 'unit'], null);
 	} else {
 		return state;
 	}
@@ -174,7 +173,7 @@ function findAtakers(field, playerNumber) {
   const colResult = field.filter(cell => chekCol(onlyPlyerCell, cell));
   const diagResult = chekDiag(onlyPlyerCell);
 	if (rowResult.count() > 2) {
-		return rowResult;
+	  return rowResult;
 	} else if (colResult.count() > 2) {
       return colResult;
 	} else if (diagResult) {
@@ -245,7 +244,35 @@ function genAnimation(state, roomId) {
       return field.setIn([atak.get('targetIndex'), 'dmgGet'], atak.get('dmg'))
 			            .setIn([atak.get('atakerIndex'), 'atkDirect'], atak.get('direct') );
 	});
-	return state.setIn([roomId, 'fieldAnimation'], animatedField)
+	const p1atak = state.getIn([roomId, 'players', 0, 'atak']) || false;
+	const p2atak = state.getIn([roomId, 'players', 1, 'atak']) || false;
+	
+	if (p1atak && p1atak.count() > 2) {
+      return state.setIn([roomId, 'fieldAnimation'], 
+		             animatedField.push(field.map(cell => {
+		               if (p1atak.find(cellAtk => cellAtk.get('index') === cell.get('index'))) {
+		                 return cell.set('atakPlayer', true);	
+		               } else {
+		               	return cell;
+		               }   
+		             })
+		             )); 
+	} else if (p2atak && p2atak.count() > 2) {
+		 return state.setIn([roomId, 'fieldAnimation'], 
+		             animatedField.push(field.map(cell => {
+		               if (p2atak.find(cellAtk => cellAtk.get('index') === cell.get('index'))) {
+		                 return cell.set('atakPlayer', true);	
+		               } else {
+		               	return cell;
+		               }   
+		             })
+		         )); 
+	} else {
+    
+  return state.setIn([roomId, 'fieldAnimation'], 
+		             animatedField); 
+
+ }
 }
 
 function updateCellReady (cell) {
