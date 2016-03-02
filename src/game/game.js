@@ -58,7 +58,7 @@ function dmgPlayers (state, roomId) {
   return dmgOnePlayer(dmgOnePlayer(state, roomId, 1), roomId, 0);
 }
 
-export function nextTurn(state, roomId) {
+export function nextTurn (state, roomId) {
   const curPlayer = state.get(roomId).get('curPlayer') || '';
   const p1 = state.get(roomId).get('players').get(0).get('name') || 'P1';
   const p2 = state.get(roomId).get('players').get(1).get('name') || 'P2';

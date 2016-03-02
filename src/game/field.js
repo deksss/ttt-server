@@ -5,11 +5,11 @@ export function genereateNewFied () {
 	const gameFieldId = ['00', '01', '02', '10', '11', '12', '20', '21', '22'].map(
 		function (value, index) {
 			return Map({index: index,
-				          id: value,
-									x: value[1],
-									y: value[0],
-									free: true,
-									owner: ''});
+				        id: value,
+						x: value[1],
+					    y: value[0],
+					    free: true,
+						owner: ''});
 });
 	return List(gameFieldId);
 }
@@ -28,15 +28,15 @@ export function setCard(state, roomId, playerNumber, cellId) {
 		            .setIn([roomId, 'field', cellIndex, 'free'], false)
 		            .setIn([roomId, 'players', playerNumber, 'selectedCard'], null)
 		            .setIn([roomId, 'players', playerNumber, 'canSetCards'], false)
-		            .setIn([roomId, 'players', playerNumber, 'hand', selectedCard.get('id'), 'unit'], null);
+		            .setIn([roomId, 'players', playerNumber, 'hand', selectedCard.get('id'), 'unit'], null)
+		            .setIn([roomId, 'fieldAnimation'], List([]));
 	} else {
-		return state;
+		return state.setIn([roomId, 'fieldAnimation'], List([]));
 	}
 }
 
-function nextPrepeare (state, roomId) {
-	return state.setIn([roomId, 'field'],
-		               state.getIn([roomId, 'field']).map(function (cell) {
+function nextPrepeare (state) {
+	return state.set('field', state.get('field').map(function (cell) {
 		                 if (cell.get('died')) {
 			               return cell.set('died', false)
 			                          .set('free', true)
@@ -46,19 +46,19 @@ function nextPrepeare (state, roomId) {
 			               return cell;
 		                 }
 	             }))
-	            .setIn([roomId, 'ataksAction'], List([]))
-							.setIn([roomId, 'fieldAnimation'], List([]));
+	            .set('ataksAction', List([]))
+							.set('fieldAnimation', List([]));
 }
 
 function normalizeDirects (cell, field) {
   const DIRECTIOINS = {'UL': {x:-1, y: -1},
 	  'U': {x: 0, y: -1},
-	  'UR': {x: 1, y: -1},
-	  'L':  {x: -1, y: 0},
+	  'UR':{x: 1, y: -1},
+	  'L': {x: -1, y: 0},
 	  'R': {x: 1, y: 0},
-	  'DL': {x:-1, y: 1},
+	  'DL':{x:-1, y: 1},
 	  'D': {x: 0, y: 1},
-	  'DR': {x: 1, y: 1}};
+	  'DR':{x: 1, y: 1}};
 
   return cell.getIn(['unit', 'direction']).map(direct => {
 		const x = Number(DIRECTIOINS[direct].x) + Number(cell.get('x'));
@@ -98,8 +98,8 @@ function getTargetForAtk (field, cell) {
   }
 }
 
-function setAtk (state, roomId) {
-  const field = state.getIn([roomId, 'field']);
+function setAtk (state) {
+  const field = state.get('field');
   const ataksAction = field.map(function (cell) {
     if (cell.get('unit') &&
 		cell.getIn(['unit', 'atk']) &&
@@ -120,7 +120,7 @@ function setAtk (state, roomId) {
 		  return false;
 		}
 	});
-	return state.setIn([roomId, 'ataksAction'],
+	return state.set('ataksAction',
 		               List(ataksAction).filter(val => val !== false));
 }
 
@@ -183,10 +183,10 @@ function findAtakers(field, playerNumber) {
 	}
 }
 
-function findPlayersAtkCell (state, roomId) {
-	const field = state.getIn([roomId, 'field']);
-	return state.setIn([roomId, "players", 0, 'atak'], findAtakers(field, 0))
-	            .setIn([roomId, "players", 1, 'atak'], findAtakers(field, 1));
+function findPlayersAtkCell (state) {
+	const field = state.get('field');
+	return state.setIn([ "players", 0, 'atak'], findAtakers(field, 0))
+	            .setIn(["players", 1, 'atak'], findAtakers(field, 1));
 }
 
 function calcTargetDmg (cellAtk) {
@@ -227,52 +227,51 @@ function chekDied (cell) {
 	}
 }
 
-function calcHp(state, roomId) {
-	const ataksAction = state.getIn([roomId, 'ataksAction']);
-	const oldField = state.getIn([roomId, 'field']);
+function calcHp(state) {
+	const ataksAction = state.get('ataksAction');
+	const oldField = state.get('field');
 	const newField = oldField.map(function (cell) {
       return callOneCellHp(oldField, ataksAction, cell);
 	});
-	return state.setIn([roomId, 'prevField'], state.getIn([roomId, 'field']))
-	            .setIn([roomId, 'field'], List(newField));
+	return state.set('prevField', state.getIn( 'field'))
+	            .set('field', List(newField));
 }
 
-function genAnimation(state, roomId) {
-	const ataksAction = state.getIn([roomId, 'ataksAction']);
-	const field = state.getIn([roomId, 'field']);
-	const animatedField = ataksAction.map(function (atak) {
-      return field.setIn([atak.get('targetIndex'), 'dmgGet'], atak.get('dmg'))
-			            .setIn([atak.get('atakerIndex'), 'atkDirect'], atak.get('direct') );
-	});
-	const p1atak = state.getIn([roomId, 'players', 0, 'atak']) || false;
-	const p2atak = state.getIn([roomId, 'players', 1, 'atak']) || false;
-	
-	if (p1atak && p1atak.count() > 2) {
-      return state.setIn([roomId, 'fieldAnimation'], 
-		             animatedField.push(field.map(cell => {
-		               if (p1atak.find(cellAtk => cellAtk.get('index') === cell.get('index'))) {
+function genPlayerAtak(state, player)  { 
+  const atakFrame = state.getIn([ 'players', player, 'atak']) || false;
+  if (atakFrame && atakFrame.count() > 2) { 
+    return state.get('field').map(cell => {
+		               if (atakFrame.find(cellAtk => cellAtk.get('index') === cell.get('index'))) {
 		                 return cell.set('atakPlayer', true);	
 		               } else {
 		               	return cell;
 		               }   
-		             })
-		             )); 
-	} else if (p2atak && p2atak.count() > 2) {
-		 return state.setIn([roomId, 'fieldAnimation'], 
-		             animatedField.push(field.map(cell => {
-		               if (p2atak.find(cellAtk => cellAtk.get('index') === cell.get('index'))) {
-		                 return cell.set('atakPlayer', true);	
-		               } else {
-		               	return cell;
-		               }   
-		             })
-		         )); 
-	} else {
-    
-  return state.setIn([roomId, 'fieldAnimation'], 
-		             animatedField); 
+		    })  
+  } else {
+  	return false;
+  }
+}
 
- }
+function genFieldAnimation (state) {
+  let animatedField = state.get('ataksAction')
+	                         .map(function (atak) {
+      return  state.get('field')
+                   .setIn([atak.get('targetIndex'), 'dmgGet'], atak.get('dmg'))
+			       .setIn([atak.get('atakerIndex'), 'atkDirect'], atak.get('direct') );
+  });
+  const p1atak = genPlayerAtak(state, 0);
+  const p2atak = genPlayerAtak(state, 1);
+
+  if (p1atak) { 
+    return state.set( 'fieldAnimation', 
+		             animatedField.push(p1atak));
+  } else if (p2atak) {
+  	  return state.set( 'fieldAnimation', 
+		             animatedField.push(p2atak));
+  } else {
+    return state.set('fieldAnimation', 
+		             animatedField);	
+  }
 }
 
 function updateCellReady (cell) {
@@ -284,20 +283,21 @@ function updateCellReady (cell) {
 }
 
 
-function setCardsReady(state, roomId) {
-  const oldField = state.getIn([roomId, 'field']);
-  return state.setIn([roomId, 'field'],
-  	                 oldField.map(cell => updateCellReady(cell)));
+function setCardsReady(state) {
+  return state.set('field',
+  	               state.get( 'field').map(cell => updateCellReady(cell)));
 }
 
 export function fieldCalc (state, roomId) {
   if (state.getIn([roomId, 'field'])) {
-	  return genAnimation(
-		       findPlayersAtkCell(
-			     setCardsReady(
-			     calcHp(
-				   setAtk(
-				   nextPrepeare(state, roomId), roomId), roomId), roomId), roomId), roomId);
+  	let roomState = state.get(roomId);
+	  return state.set(roomId, genFieldAnimation(
+		                       findPlayersAtkCell(
+			                   setCardsReady(
+			                   calcHp(
+				               setAtk(
+				               nextPrepeare(roomState)))))));
+
   } else {
     return state;
   }
