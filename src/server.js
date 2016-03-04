@@ -28,9 +28,9 @@ export function startServer(store) {
 
   io.on('connection', (socket) => {
     socket.emit('state', {rooms: store.getState().toJS().rooms});
+    
     socket.on('create', (roomId, playerId, name) => {
       //socket.to(roomId).emit('your room id', roomId);
-
       socket.join(roomId);
       store.dispatch({type: 'CREATE_ROOM', roomId: roomId, playerId: playerId, name: name});
 
@@ -56,6 +56,19 @@ export function startServer(store) {
       store.dispatch({type: 'NEXT_TURN', roomId: roomId});
       socket.on('action', store.dispatch.bind(store));
       console.log('player connect to room ID: ' + roomId);
+    });
+
+      socket.on('createVsBot', (roomId, playerId, name) => {
+      socket.join(roomId);
+      store.dispatch({type: 'CREATE_ROOM_VS_BOT', roomId: roomId, playerId: playerId, name: name});
+
+      console.log('room create: by player ' + playerId);
+      console.log(store.getState().toJS());
+
+      socket.to(roomId).emit('state', store.getState().toJS());
+      socket.to(roomId).emit('your room id', roomId);
+      store.dispatch({type: 'NEXT_TURN', roomId: roomId});
+      socket.on('action', store.dispatch.bind(store));
     });
 
   });

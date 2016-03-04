@@ -2,7 +2,9 @@ import {List, Map} from 'immutable';
 import {getUnitById, initUnits} from './units';
 import {generateDeck, getCard} from './deck';
 import {coin} from '../utils';
-import {genereateNewFied, fieldCalc} from './field';
+import {genereateNewFied} from './field';
+import {turnCalc} from './turn';
+import {botTurn} from './bot'
 
 export function initData(state) {
   const UNIT_SRC = require('./units-list.json') || [];
@@ -34,7 +36,12 @@ export function chekWin (state, roomId) {
   } else if (p1HP < 1 && p2HP < 1) {
     return state.setIn([roomId, 'winner'], 'Draw!');
   } else {
-    return state;
+    if (roomStatePlayers.getIn([ 1,  'id']) === 'bot1' &&
+        state.getIn([roomId, 'curPlayer']) === 'P2') {     
+      return botTurn(state, roomId, 1);
+    } else {
+      return state;    
+    }
   }
 };
 
@@ -62,17 +69,19 @@ export function nextTurn (state, roomId) {
   const curPlayer = state.get(roomId).get('curPlayer') || '';
   const p1 = state.get(roomId).get('players').get(0).get('name') || 'P1';
   const p2 = state.get(roomId).get('players').get(1).get('name') || 'P2';
+  let newCurSign = p2, 
+      newCurNumber = 1, 
+      notCurNumber = 0;
 
   if ((!curPlayer && coin()) || curPlayer === p2) {
-    return chekWin(getCard(dmgPlayers(fieldCalc(state.setIn([roomId, 'curPlayer'], p1)
-                .setIn([roomId, 'players', 0, 'canSetCards'], true)
-                .setIn([roomId, 'players', 1, 'canSetCards'], false), roomId), roomId), roomId, 1), roomId);
+    newCurSign = p1; 
+    newCurNumber = 0;
+    notCurNumber = 1;
   }
-  else  {
-    return chekWin(getCard(dmgPlayers(fieldCalc(state.setIn([roomId, 'curPlayer'], p2)
-                .setIn([roomId, 'players', 1, 'canSetCards'], true)
-                .setIn([roomId, 'players', 0, 'canSetCards'], false), roomId), roomId), roomId, 0), roomId);
-  }
+
+  return chekWin(getCard(dmgPlayers(turnCalc(state.setIn([roomId, 'curPlayer'], newCurSign)
+                .setIn([roomId, 'players', newCurNumber, 'canSetCards'], true)
+                .setIn([roomId, 'players', notCurNumber, 'canSetCards'], false), roomId), roomId), roomId, notCurNumber), roomId);
 }
 
 export function restart(state) {

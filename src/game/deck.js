@@ -69,10 +69,11 @@ export function selectCard(state, roomId, playerNumber, id) {
   data.selectedCard = state.getIn([roomId, 'players', playerNumber, 'hand'])
                            .find(card => card.get('id') === id);
   data.roomId = roomId || false;
-  data.playerNumber = playerNumber || false;
+  data.playerNumber = playerNumber;
   if (selectValidation(data)) {
-    return state.setIn([roomId, 'players', playerNumber, 'selectedCard'], data.selectedCard);
+    return state.setIn([roomId, 'players', playerNumber, 'selectedCard'], data.selectedCard)
+                .setIn([roomId, 'fieldAnimation'], List([]));
   } else {
-    return state;
+    return state.setIn([roomId, 'fieldAnimation'], List([]));
   }
 }

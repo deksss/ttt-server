@@ -1,5 +1,5 @@
-import { INITIAL_STATE, createRoom, joinRoom} from './core';
-import {playerStart, starGame, nextTurn, restart, initData} from  './game/game';
+import { INITIAL_STATE, createRoom, createRoomBot, joinRoom} from './core';
+import {playerStart, starGame, nextTurn, nextTurnBot, restart, initData} from  './game/game';
 import {getCard, selectCard, selectDeck} from  './game/deck';
 import {calcDmg, setCard} from  './game/field';
 
@@ -7,6 +7,8 @@ export default function reducer(state = INITIAL_STATE, action) {
   switch (action.type) {
   case 'NEXT_TURN':
     return nextTurn(state, action.roomId);
+  case 'NEXT_TURN_BOT':
+    return nextTurnBot(state, action.roomId);
   case 'RESTART':
     return restart(state, action.roomId);
   case 'PLAYER_START':
@@ -15,6 +17,8 @@ export default function reducer(state = INITIAL_STATE, action) {
     return setReady(state, action.roomId, action.clientId);
   case 'CREATE_ROOM':
     return createRoom(state, action.roomId, action.playerId, action.name);
+  case 'CREATE_ROOM_VS_BOT':
+    return createRoomBot(state, action.roomId, action.playerId, action.name);
   case 'JOIN_ROOM':
     return joinRoom(state, action.roomId, action.playerId, action.name);
   case 'SELECT_CARD':

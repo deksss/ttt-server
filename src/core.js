@@ -1,4 +1,6 @@
 import {List, Map} from 'immutable';
+import {selectDeck} from  './game/deck';
+import {playerStart} from './game/game'
 
 export const INITIAL_STATE = Map();
 
@@ -12,6 +14,19 @@ export function createRoom(state, roomId, playerId, name) {
   return state.set(roomId, newRoom)
               .set('rooms', state.get('rooms').push(roomId));
 }
+
+export function createRoomBot(state, roomId, playerId, name) {
+  const botId = 'bot1';
+  const botName = 'Bot';
+  const botNumber = 1;
+  const newState = createRoom(state, roomId, playerId, name);
+  return playerStart(
+         selectDeck(
+         joinRoom(newState, roomId, botId, botName),
+                  roomId, botNumber, 'comander-deck'), 
+                  roomId, botId);
+}
+
 
 export function joinRoom(state, roomId, playerId, name) {
   if (!state.get(roomId).get('players').get(1).id) {
