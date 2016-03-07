@@ -5,7 +5,7 @@
   "atkCount": 1,
   "direction":["U", "D", "L", "R", "UL", "UR", "DR", "DL" ],
   "info": "test text",
-  "ready":  false,
+  "ready":  true,
   "sprite": "assasin",
   "onStart": [],
   "onTurn": [],

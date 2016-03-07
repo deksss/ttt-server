@@ -13,8 +13,7 @@ export function genereateNewFied () {
 	return List(gameFieldId);
 }
 
-
-export function setCard(state, roomId, playerNumber, cellId) {
+function setNew (state, roomId, playerNumber, cellId) {
 	const playerData = state.get(roomId).get('players').get(playerNumber);
 	const selectedCard = playerData.get('selectedCard') || false;
 	const cell = state.get(roomId)
@@ -34,6 +33,44 @@ export function setCard(state, roomId, playerNumber, cellId) {
 	}
 }
 
+function setUpgrade () {
+
+}
+
+export function setCard(state, roomId, playerNumber, cellId) {
+	const playerData = state.get(roomId).get('players').get(playerNumber);
+	const selectedCard = playerData.get('selectedCard') || false;
+	const cell = state.get(roomId)
+	                  .get('field')
+	                  .find(value => value.get('id') === cellId) || false;
+	const cellIndex = cell.get('index');
+	const required = selectedCard.getIn(['unit', 'require']) || false;
+	if (cell.get('free') &&
+	    selectedCard &&
+			playerData.get('canSetCards') &&
+			required !== 0 &&
+			!required) {
+	  return setCardInCell (state, roomId, playerNumber, cellIndex, selectedCard);
+	} else if ((required || required === 0) &&
+	           cell.getIn(['unit', 'id']) === required &&
+					   cell.getIn(['unit', 'ready'])) {
+		return setCardInCell (state, roomId, playerNumber, cellIndex, selectedCard);
+	}
+	else {
+		return state;
+	}
+}
+
+function setCardInCell (state, roomId, playerNumber, cellIndex, selectedCard) {
+	return state.setIn([roomId, 'field', cellIndex, 'unit'], selectedCard.get('unit'))
+							.setIn([roomId, 'field', cellIndex, 'owner'], playerNumber)
+							.setIn([roomId, 'field', cellIndex, 'free'], false)
+							.setIn([roomId, 'players', playerNumber, 'selectedCard'], null)
+							.setIn([roomId, 'players', playerNumber, 'canSetCards'], false)
+							.setIn([roomId, 'players', playerNumber, 'hand', selectedCard.get('id'), 'unit'], null)
+							.setIn([roomId, 'fieldAnimation'], List([]));
+}
+
 export function findFreeCellId(state, roomId) {
   if (state.getIn([roomId, 'field'])) {
   return state.getIn([roomId, 'field'])
@@ -43,5 +80,3 @@ export function findFreeCellId(state, roomId) {
   	return false;
   }
 }
-
-

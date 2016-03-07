@@ -2,7 +2,7 @@ webpackJsonp([1],[
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(83);
+	module.exports = __webpack_require__(82);
 
 
 /***/ },
@@ -18,15 +18,15 @@ webpackJsonp([1],[
 /* 10 */,
 /* 11 */,
 /* 12 */,
-/* 13 */,
-/* 14 */,
-/* 15 */,
-/* 16 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(257);
+	module.exports = __webpack_require__(258);
 
 /***/ },
+/* 14 */,
+/* 15 */,
+/* 16 */,
 /* 17 */,
 /* 18 */,
 /* 19 */,
@@ -48,7 +48,7 @@ webpackJsonp([1],[
 	var sliceBuffer = __webpack_require__(155);
 	var base64encoder = __webpack_require__(171);
 	var after = __webpack_require__(154);
-	var utf8 = __webpack_require__(320);
+	var utf8 = __webpack_require__(321);
 	
 	/**
 	 * Check if we are running an android browser. That requires us to use
@@ -647,7 +647,7 @@ webpackJsonp([1],[
 /* 34 */,
 /* 35 */,
 /* 36 */
-[324, 314],
+[325, 315],
 /* 37 */
 /***/ function(module, exports) {
 
@@ -661,7 +661,7 @@ webpackJsonp([1],[
 
 /***/ },
 /* 38 */
-[324, 181],
+[325, 181],
 /* 39 */,
 /* 40 */,
 /* 41 */
@@ -693,10 +693,12 @@ webpackJsonp([1],[
 	exports.setClientId = setClientId;
 	exports.joinRoom = joinRoom;
 	exports.createRoom = createRoom;
+	exports.createRoomBot = createRoomBot;
 	exports.setRoomId = setRoomId;
 	exports.setConnectionState = setConnectionState;
 	exports.setState = setState;
 	exports.setField = setField;
+	exports.clearMsg = clearMsg;
 	exports.setPlayerHand = setPlayerHand;
 	exports.setEnemyHand = setEnemyHand;
 	exports.next = next;
@@ -729,6 +731,12 @@ webpackJsonp([1],[
 	  };
 	}
 	
+	function createRoomBot() {
+	  return {
+	    type: 'CREATE_VS_BOT'
+	  };
+	}
+	
 	function setRoomId(roomId) {
 	  return {
 	    type: 'SET_ROOM_ID',
@@ -756,6 +764,12 @@ webpackJsonp([1],[
 	  return {
 	    type: 'SET_FIELD',
 	    field: field
+	  };
+	}
+	
+	function clearMsg() {
+	  return {
+	    type: 'CLEAR_MSG'
 	  };
 	}
 	
@@ -1011,7 +1025,7 @@ webpackJsonp([1],[
 /***/ function(module, exports, __webpack_require__) {
 
 	// browser shim for xmlhttprequest module
-	var hasCORS = __webpack_require__(208);
+	var hasCORS = __webpack_require__(209);
 	
 	module.exports = function(opts) {
 	  var xdomain = opts.xdomain;
@@ -1223,6 +1237,1253 @@ webpackJsonp([1],[
 /* 56 */,
 /* 57 */,
 /* 58 */
+/***/ function(module, exports) {
+
+	/**
+	 * Compiles a querystring
+	 * Returns string representation of the object
+	 *
+	 * @param {Object}
+	 * @api private
+	 */
+	
+	exports.encode = function (obj) {
+	  var str = '';
+	
+	  for (var i in obj) {
+	    if (obj.hasOwnProperty(i)) {
+	      if (str.length) str += '&';
+	      str += encodeURIComponent(i) + '=' + encodeURIComponent(obj[i]);
+	    }
+	  }
+	
+	  return str;
+	};
+	
+	/**
+	 * Parses a simple querystring into an object
+	 *
+	 * @param {String} qs
+	 * @api private
+	 */
+	
+	exports.decode = function(qs){
+	  var qry = {};
+	  var pairs = qs.split('&');
+	  for (var i = 0, l = pairs.length; i < l; i++) {
+	    var pair = pairs[i].split('=');
+	    qry[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+	  }
+	  return qry;
+	};
+
+
+/***/ },
+/* 59 */,
+/* 60 */,
+/* 61 */,
+/* 62 */,
+/* 63 */,
+/* 64 */,
+/* 65 */,
+/* 66 */,
+/* 67 */,
+/* 68 */,
+/* 69 */,
+/* 70 */,
+/* 71 */,
+/* 72 */,
+/* 73 */,
+/* 74 */,
+/* 75 */,
+/* 76 */,
+/* 77 */,
+/* 78 */,
+/* 79 */,
+/* 80 */,
+/* 81 */
+/***/ function(module, exports, __webpack_require__) {
+
+	
+	/**
+	 * Module dependencies.
+	 */
+	
+	var debug = __webpack_require__(36)('socket.io-parser');
+	var json = __webpack_require__(316);
+	var isArray = __webpack_require__(41);
+	var Emitter = __webpack_require__(318);
+	var binary = __webpack_require__(317);
+	var isBuf = __webpack_require__(150);
+	
+	/**
+	 * Protocol version.
+	 *
+	 * @api public
+	 */
+	
+	exports.protocol = 4;
+	
+	/**
+	 * Packet types.
+	 *
+	 * @api public
+	 */
+	
+	exports.types = [
+	  'CONNECT',
+	  'DISCONNECT',
+	  'EVENT',
+	  'BINARY_EVENT',
+	  'ACK',
+	  'BINARY_ACK',
+	  'ERROR'
+	];
+	
+	/**
+	 * Packet type `connect`.
+	 *
+	 * @api public
+	 */
+	
+	exports.CONNECT = 0;
+	
+	/**
+	 * Packet type `disconnect`.
+	 *
+	 * @api public
+	 */
+	
+	exports.DISCONNECT = 1;
+	
+	/**
+	 * Packet type `event`.
+	 *
+	 * @api public
+	 */
+	
+	exports.EVENT = 2;
+	
+	/**
+	 * Packet type `ack`.
+	 *
+	 * @api public
+	 */
+	
+	exports.ACK = 3;
+	
+	/**
+	 * Packet type `error`.
+	 *
+	 * @api public
+	 */
+	
+	exports.ERROR = 4;
+	
+	/**
+	 * Packet type 'binary event'
+	 *
+	 * @api public
+	 */
+	
+	exports.BINARY_EVENT = 5;
+	
+	/**
+	 * Packet type `binary ack`. For acks with binary arguments.
+	 *
+	 * @api public
+	 */
+	
+	exports.BINARY_ACK = 6;
+	
+	/**
+	 * Encoder constructor.
+	 *
+	 * @api public
+	 */
+	
+	exports.Encoder = Encoder;
+	
+	/**
+	 * Decoder constructor.
+	 *
+	 * @api public
+	 */
+	
+	exports.Decoder = Decoder;
+	
+	/**
+	 * A socket.io Encoder instance
+	 *
+	 * @api public
+	 */
+	
+	function Encoder() {}
+	
+	/**
+	 * Encode a packet as a single string if non-binary, or as a
+	 * buffer sequence, depending on packet type.
+	 *
+	 * @param {Object} obj - packet object
+	 * @param {Function} callback - function to handle encodings (likely engine.write)
+	 * @return Calls callback with Array of encodings
+	 * @api public
+	 */
+	
+	Encoder.prototype.encode = function(obj, callback){
+	  debug('encoding packet %j', obj);
+	
+	  if (exports.BINARY_EVENT == obj.type || exports.BINARY_ACK == obj.type) {
+	    encodeAsBinary(obj, callback);
+	  }
+	  else {
+	    var encoding = encodeAsString(obj);
+	    callback([encoding]);
+	  }
+	};
+	
+	/**
+	 * Encode packet as string.
+	 *
+	 * @param {Object} packet
+	 * @return {String} encoded
+	 * @api private
+	 */
+	
+	function encodeAsString(obj) {
+	  var str = '';
+	  var nsp = false;
+	
+	  // first is type
+	  str += obj.type;
+	
+	  // attachments if we have them
+	  if (exports.BINARY_EVENT == obj.type || exports.BINARY_ACK == obj.type) {
+	    str += obj.attachments;
+	    str += '-';
+	  }
+	
+	  // if we have a namespace other than `/`
+	  // we append it followed by a comma `,`
+	  if (obj.nsp && '/' != obj.nsp) {
+	    nsp = true;
+	    str += obj.nsp;
+	  }
+	
+	  // immediately followed by the id
+	  if (null != obj.id) {
+	    if (nsp) {
+	      str += ',';
+	      nsp = false;
+	    }
+	    str += obj.id;
+	  }
+	
+	  // json data
+	  if (null != obj.data) {
+	    if (nsp) str += ',';
+	    str += json.stringify(obj.data);
+	  }
+	
+	  debug('encoded %j as %s', obj, str);
+	  return str;
+	}
+	
+	/**
+	 * Encode packet as 'buffer sequence' by removing blobs, and
+	 * deconstructing packet into object with placeholders and
+	 * a list of buffers.
+	 *
+	 * @param {Object} packet
+	 * @return {Buffer} encoded
+	 * @api private
+	 */
+	
+	function encodeAsBinary(obj, callback) {
+	
+	  function writeEncoding(bloblessData) {
+	    var deconstruction = binary.deconstructPacket(bloblessData);
+	    var pack = encodeAsString(deconstruction.packet);
+	    var buffers = deconstruction.buffers;
+	
+	    buffers.unshift(pack); // add packet info to beginning of data list
+	    callback(buffers); // write all the buffers
+	  }
+	
+	  binary.removeBlobs(obj, writeEncoding);
+	}
+	
+	/**
+	 * A socket.io Decoder instance
+	 *
+	 * @return {Object} decoder
+	 * @api public
+	 */
+	
+	function Decoder() {
+	  this.reconstructor = null;
+	}
+	
+	/**
+	 * Mix in `Emitter` with Decoder.
+	 */
+	
+	Emitter(Decoder.prototype);
+	
+	/**
+	 * Decodes an ecoded packet string into packet JSON.
+	 *
+	 * @param {String} obj - encoded packet
+	 * @return {Object} packet
+	 * @api public
+	 */
+	
+	Decoder.prototype.add = function(obj) {
+	  var packet;
+	  if ('string' == typeof obj) {
+	    packet = decodeString(obj);
+	    if (exports.BINARY_EVENT == packet.type || exports.BINARY_ACK == packet.type) { // binary packet's json
+	      this.reconstructor = new BinaryReconstructor(packet);
+	
+	      // no attachments, labeled binary but no binary data to follow
+	      if (this.reconstructor.reconPack.attachments === 0) {
+	        this.emit('decoded', packet);
+	      }
+	    } else { // non-binary full packet
+	      this.emit('decoded', packet);
+	    }
+	  }
+	  else if (isBuf(obj) || obj.base64) { // raw binary data
+	    if (!this.reconstructor) {
+	      throw new Error('got binary data when not reconstructing a packet');
+	    } else {
+	      packet = this.reconstructor.takeBinaryData(obj);
+	      if (packet) { // received final buffer
+	        this.reconstructor = null;
+	        this.emit('decoded', packet);
+	      }
+	    }
+	  }
+	  else {
+	    throw new Error('Unknown type: ' + obj);
+	  }
+	};
+	
+	/**
+	 * Decode a packet String (JSON data)
+	 *
+	 * @param {String} str
+	 * @return {Object} packet
+	 * @api private
+	 */
+	
+	function decodeString(str) {
+	  var p = {};
+	  var i = 0;
+	
+	  // look up type
+	  p.type = Number(str.charAt(0));
+	  if (null == exports.types[p.type]) return error();
+	
+	  // look up attachments if type binary
+	  if (exports.BINARY_EVENT == p.type || exports.BINARY_ACK == p.type) {
+	    var buf = '';
+	    while (str.charAt(++i) != '-') {
+	      buf += str.charAt(i);
+	      if (i == str.length) break;
+	    }
+	    if (buf != Number(buf) || str.charAt(i) != '-') {
+	      throw new Error('Illegal attachments');
+	    }
+	    p.attachments = Number(buf);
+	  }
+	
+	  // look up namespace (if any)
+	  if ('/' == str.charAt(i + 1)) {
+	    p.nsp = '';
+	    while (++i) {
+	      var c = str.charAt(i);
+	      if (',' == c) break;
+	      p.nsp += c;
+	      if (i == str.length) break;
+	    }
+	  } else {
+	    p.nsp = '/';
+	  }
+	
+	  // look up id
+	  var next = str.charAt(i + 1);
+	  if ('' !== next && Number(next) == next) {
+	    p.id = '';
+	    while (++i) {
+	      var c = str.charAt(i);
+	      if (null == c || Number(c) != c) {
+	        --i;
+	        break;
+	      }
+	      p.id += str.charAt(i);
+	      if (i == str.length) break;
+	    }
+	    p.id = Number(p.id);
+	  }
+	
+	  // look up json data
+	  if (str.charAt(++i)) {
+	    try {
+	      p.data = json.parse(str.substr(i));
+	    } catch(e){
+	      return error();
+	    }
+	  }
+	
+	  debug('decoded %s as %j', str, p);
+	  return p;
+	}
+	
+	/**
+	 * Deallocates a parser's resources
+	 *
+	 * @api public
+	 */
+	
+	Decoder.prototype.destroy = function() {
+	  if (this.reconstructor) {
+	    this.reconstructor.finishedReconstruction();
+	  }
+	};
+	
+	/**
+	 * A manager of a binary event's 'buffer sequence'. Should
+	 * be constructed whenever a packet of type BINARY_EVENT is
+	 * decoded.
+	 *
+	 * @param {Object} packet
+	 * @return {BinaryReconstructor} initialized reconstructor
+	 * @api private
+	 */
+	
+	function BinaryReconstructor(packet) {
+	  this.reconPack = packet;
+	  this.buffers = [];
+	}
+	
+	/**
+	 * Method to be called when binary data received from connection
+	 * after a BINARY_EVENT packet.
+	 *
+	 * @param {Buffer | ArrayBuffer} binData - the raw binary data received
+	 * @return {null | Object} returns null if more binary data is expected or
+	 *   a reconstructed packet object if all buffers have been received.
+	 * @api private
+	 */
+	
+	BinaryReconstructor.prototype.takeBinaryData = function(binData) {
+	  this.buffers.push(binData);
+	  if (this.buffers.length == this.reconPack.attachments) { // done with buffer list
+	    var packet = binary.reconstructPacket(this.reconPack, this.buffers);
+	    this.finishedReconstruction();
+	    return packet;
+	  }
+	  return null;
+	};
+	
+	/**
+	 * Cleans up binary packet reconstruction variables.
+	 *
+	 * @api private
+	 */
+	
+	BinaryReconstructor.prototype.finishedReconstruction = function() {
+	  this.reconPack = null;
+	  this.buffers = [];
+	};
+	
+	function error(data){
+	  return {
+	    type: exports.ERROR,
+	    data: 'parser error'
+	  };
+	}
+
+
+/***/ },
+/* 82 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.animateField = animateField;
+	exports.sendCreate = sendCreate;
+	exports.sendCreateBot = sendCreateBot;
+	exports.sendJoin = sendJoin;
+	
+	var _react = __webpack_require__(2);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	var _reactDom = __webpack_require__(223);
+	
+	var _reactDom2 = _interopRequireDefault(_reactDom);
+	
+	var _reactRouter = __webpack_require__(42);
+	
+	var _reactRouter2 = _interopRequireDefault(_reactRouter);
+	
+	var _redux = __webpack_require__(80);
+	
+	var _reactRedux = __webpack_require__(30);
+	
+	var _socket = __webpack_require__(313);
+	
+	var _socket2 = _interopRequireDefault(_socket);
+	
+	var _reducer = __webpack_require__(157);
+	
+	var _reducer2 = _interopRequireDefault(_reducer);
+	
+	var _action_creators = __webpack_require__(51);
+	
+	var _remote_action_middleware = __webpack_require__(158);
+	
+	var _remote_action_middleware2 = _interopRequireDefault(_remote_action_middleware);
+	
+	var _client_id = __webpack_require__(156);
+	
+	var _client_id2 = _interopRequireDefault(_client_id);
+	
+	var _App = __webpack_require__(159);
+	
+	var _App2 = _interopRequireDefault(_App);
+	
+	var _Start = __webpack_require__(169);
+	
+	var _Game = __webpack_require__(164);
+	
+	var _style = __webpack_require__(90);
+	
+	var _style2 = _interopRequireDefault(_style);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var socket = (0, _socket2.default)(location.protocol + '//' + location.hostname + ':3001');
+	
+	socket.on('state', function (state) {
+	  var roomId = store.getState().get('roomId');
+	  if (state[roomId] && state[roomId].fieldAnimation && state[roomId].fieldAnimation.length > 0) {
+	    animateField(state, roomId);
+	  } else {
+	    store.dispatch((0, _action_creators.setState)(state[roomId], state['rooms']));
+	  }
+	});
+	
+	function animateField(state, roomId) {
+	  var maxLoops = state[roomId].fieldAnimation.length;
+	  var counter = 0;
+	  var animationTime = 1000;
+	  var stateWithNewCur = store.getState().merge({ curPlayer: state[roomId].curPlayer }).toJS();
+	  // for endTurn button animate
+	  store.dispatch((0, _action_creators.setState)(stateWithNewCur, state['rooms']));
+	  // *in future refactor and push this task in the render
+	  (function next() {
+	    if (counter++ >= maxLoops) return;
+	    setTimeout(function () {
+	      store.dispatch((0, _action_creators.setField)(state[roomId].fieldAnimation[counter - 1]));
+	      next();
+	    }, animationTime);
+	  })();
+	
+	  setTimeout(function () {
+	    store.dispatch((0, _action_creators.setState)(state[roomId], state['rooms']));
+	  }, animationTime * (maxLoops + 1));
+	}
+	
+	function sendCreate(roomId, playerId, name) {
+	  socket.emit('create', roomId, playerId, name);
+	}
+	
+	function sendCreateBot(roomId, playerId, name) {
+	  socket.emit('createVsBot', roomId, playerId, name);
+	}
+	
+	function sendJoin(roomId, playerId, name) {
+	  socket.emit('join', roomId, playerId, name);
+	}
+	
+	['connect', 'connect_error', 'connect_timeout', 'reconnect', 'reconnecting', 'reconnect_error', 'reconnect_failed'].forEach(function (ev) {
+	  return socket.on(ev, function () {
+	    return store.dispatch((0, _action_creators.setConnectionState)(ev, socket.connected));
+	  });
+	});
+	
+	var createStoreWithMiddleware = (0, _redux.applyMiddleware)((0, _remote_action_middleware2.default)(socket))(_redux.createStore);
+	
+	var store = createStoreWithMiddleware(_reducer2.default);
+	store.dispatch((0, _action_creators.setClientId)((0, _client_id2.default)()));
+	
+	store.dispatch((0, _action_creators.setYourPlayerNumber)());
+	
+	var routes = _react2.default.createElement(
+	  _reactRouter.Route,
+	  { component: _App2.default },
+	  _react2.default.createElement(_reactRouter.Route, { path: '/', component: _Start.StartContainer }),
+	  _react2.default.createElement(_reactRouter.Route, { path: '/game', component: _Game.GameContainer })
+	);
+	
+	_reactDom2.default.render(_react2.default.createElement(
+	  _reactRedux.Provider,
+	  { store: store, className: _style2.default['app'] },
+	  _react2.default.createElement(
+	    _reactRouter2.default,
+	    null,
+	    routes
+	  )
+	), document.getElementById('app'));
+
+/***/ },
+/* 83 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var _UnitRender = __webpack_require__(89);
+	
+	var _UnitRender2 = _interopRequireDefault(_UnitRender);
+	
+	var _react = __webpack_require__(2);
+	
+	var _react2 = _interopRequireDefault(_react);
+	
+	var _reactAddonsPureRenderMixin = __webpack_require__(13);
+	
+	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var Unit = _react2.default.createClass({
+	  displayName: 'Unit',
+	
+	  mixins: [_reactAddonsPureRenderMixin2.default],
+	  propTypes: {
+	    data: _react.PropTypes.object.isRequired,
+	    arrowCss: _react.PropTypes.string.isRequired,
+	    died: _react.PropTypes.bool.isRequired,
+	    inCard: _react.PropTypes.bool.isRequired,
+	    atkDirect: _react.PropTypes.string.isRequired
+	  },
+	  getAtkCss: function getAtkCss(direction) {
+	    if (direction) {
+	      return ' ' + _UnitRender2.default['anim-atk-' + direction];
+	    } else {
+	      return '';
+	    }
+	  },
+	  getOpacity: function getOpacity(direction) {
+	    if (this.props.data && this.props.data.direction.find(function (val) {
+	      return val === direction;
+	    })) {
+	      return 1;
+	    } else {
+	      return 0;
+	    }
+	  },
+	  render: function render() {
+	    var hp = this.props.data ? this.props.data.hp : '';
+	    var atk = this.props.data ? this.props.data.atk : '';
+	    var UStyle = { opacity: this.getOpacity('U') };
+	    var DStyle = { opacity: this.getOpacity('D') };
+	    var RStyle = { opacity: this.getOpacity('R') };
+	    var LStyle = { opacity: this.getOpacity('L') };
+	    var ULStyle = { opacity: this.getOpacity('UL') };
+	    var URStyle = { opacity: this.getOpacity('UR') };
+	    var DLStyle = { opacity: this.getOpacity('DL') };
+	    var DRStyle = { opacity: this.getOpacity('DR') };
+	    var backCss = ' ' + _UnitRender2.default['unit-' + this.props.data.sprite];
+	    var arrowCss = ' ' + _UnitRender2.default[this.props.arrowCss];
+	    var deadCss = this.props.died ? ' ' + _UnitRender2.default['unit-dead'] : '';
+	    var atkCss = this.getAtkCss(this.props.atkDirect);
+	    var whereCss = this.props.inCard ? _UnitRender2.default['card-unit'] : _UnitRender2.default['unit'];
+	    return _react2.default.createElement(
+	      'div',
+	      { className: whereCss + backCss + deadCss + atkCss },
+	      _react2.default.createElement(
+	        'div',
+	        { className: _UnitRender2.default['unit-top'] },
+	        _react2.default.createElement('div', { style: ULStyle, className: _UnitRender2.default['unit-top-ul'] + arrowCss }),
+	        _react2.default.createElement('div', { style: UStyle, className: _UnitRender2.default['unit-top-u'] + arrowCss }),
+	        _react2.default.createElement('div', { style: URStyle, className: _UnitRender2.default['unit-top-ur'] + arrowCss })
+	      ),
+	      _react2.default.createElement(
+	        'div',
+	        { className: _UnitRender2.default['unit-mid'] },
+	        _react2.default.createElement('div', { style: LStyle, className: _UnitRender2.default['unit-mid-l'] + arrowCss }),
+	        _react2.default.createElement('div', { style: RStyle, className: _UnitRender2.default['unit-mid-r'] + arrowCss })
+	      ),
+	      _react2.default.createElement(
+	        'div',
+	        { className: _UnitRender2.default['unit-foot'] },
+	        _react2.default.createElement('div', { style: DLStyle, className: _UnitRender2.default['unit-foot-dl'] + arrowCss }),
+	        _react2.default.createElement(
+	          'div',
+	          { className: _UnitRender2.default['unit-foot-hp'] },
+	          hp
+	        ),
+	        _react2.default.createElement('div', { style: DStyle, className: _UnitRender2.default['unit-foot-d'] + arrowCss }),
+	        _react2.default.createElement(
+	          'div',
+	          { className: _UnitRender2.default['unit-foot-atk'] },
+	          atk
+	        ),
+	        _react2.default.createElement('div', { style: DRStyle, className: _UnitRender2.default['unit-foot-dr'] + arrowCss })
+	      )
+	    );
+	  }
+	});
+	
+	module.exports = Unit;
+
+/***/ },
+/* 84 */
+/***/ function(module, exports) {
+
+	/**
+	 * Slice reference.
+	 */
+	
+	var slice = [].slice;
+	
+	/**
+	 * Bind `obj` to `fn`.
+	 *
+	 * @param {Object} obj
+	 * @param {Function|String} fn or string
+	 * @return {Function}
+	 * @api public
+	 */
+	
+	module.exports = function(obj, fn){
+	  if ('string' == typeof fn) fn = obj[fn];
+	  if ('function' != typeof fn) throw new Error('bind() requires a function');
+	  var args = slice.call(arguments, 2);
+	  return function(){
+	    return fn.apply(obj, args.concat(slice.call(arguments)));
+	  }
+	};
+
+
+/***/ },
+/* 85 */
+/***/ function(module, exports) {
+
+	
+	/**
+	 * Expose `Emitter`.
+	 */
+	
+	module.exports = Emitter;
+	
+	/**
+	 * Initialize a new `Emitter`.
+	 *
+	 * @api public
+	 */
+	
+	function Emitter(obj) {
+	  if (obj) return mixin(obj);
+	};
+	
+	/**
+	 * Mixin the emitter properties.
+	 *
+	 * @param {Object} obj
+	 * @return {Object}
+	 * @api private
+	 */
+	
+	function mixin(obj) {
+	  for (var key in Emitter.prototype) {
+	    obj[key] = Emitter.prototype[key];
+	  }
+	  return obj;
+	}
+	
+	/**
+	 * Listen on the given `event` with `fn`.
+	 *
+	 * @param {String} event
+	 * @param {Function} fn
+	 * @return {Emitter}
+	 * @api public
+	 */
+	
+	Emitter.prototype.on =
+	Emitter.prototype.addEventListener = function(event, fn){
+	  this._callbacks = this._callbacks || {};
+	  (this._callbacks['$' + event] = this._callbacks['$' + event] || [])
+	    .push(fn);
+	  return this;
+	};
+	
+	/**
+	 * Adds an `event` listener that will be invoked a single
+	 * time then automatically removed.
+	 *
+	 * @param {String} event
+	 * @param {Function} fn
+	 * @return {Emitter}
+	 * @api public
+	 */
+	
+	Emitter.prototype.once = function(event, fn){
+	  function on() {
+	    this.off(event, on);
+	    fn.apply(this, arguments);
+	  }
+	
+	  on.fn = fn;
+	  this.on(event, on);
+	  return this;
+	};
+	
+	/**
+	 * Remove the given callback for `event` or all
+	 * registered callbacks.
+	 *
+	 * @param {String} event
+	 * @param {Function} fn
+	 * @return {Emitter}
+	 * @api public
+	 */
+	
+	Emitter.prototype.off =
+	Emitter.prototype.removeListener =
+	Emitter.prototype.removeAllListeners =
+	Emitter.prototype.removeEventListener = function(event, fn){
+	  this._callbacks = this._callbacks || {};
+	
+	  // all
+	  if (0 == arguments.length) {
+	    this._callbacks = {};
+	    return this;
+	  }
+	
+	  // specific event
+	  var callbacks = this._callbacks['$' + event];
+	  if (!callbacks) return this;
+	
+	  // remove all handlers
+	  if (1 == arguments.length) {
+	    delete this._callbacks['$' + event];
+	    return this;
+	  }
+	
+	  // remove specific handler
+	  var cb;
+	  for (var i = 0; i < callbacks.length; i++) {
+	    cb = callbacks[i];
+	    if (cb === fn || cb.fn === fn) {
+	      callbacks.splice(i, 1);
+	      break;
+	    }
+	  }
+	  return this;
+	};
+	
+	/**
+	 * Emit `event` with the given args.
+	 *
+	 * @param {String} event
+	 * @param {Mixed} ...
+	 * @return {Emitter}
+	 */
+	
+	Emitter.prototype.emit = function(event){
+	  this._callbacks = this._callbacks || {};
+	  var args = [].slice.call(arguments, 1)
+	    , callbacks = this._callbacks['$' + event];
+	
+	  if (callbacks) {
+	    callbacks = callbacks.slice(0);
+	    for (var i = 0, len = callbacks.length; i < len; ++i) {
+	      callbacks[i].apply(this, args);
+	    }
+	  }
+	
+	  return this;
+	};
+	
+	/**
+	 * Return array of callbacks for `event`.
+	 *
+	 * @param {String} event
+	 * @return {Array}
+	 * @api public
+	 */
+	
+	Emitter.prototype.listeners = function(event){
+	  this._callbacks = this._callbacks || {};
+	  return this._callbacks['$' + event] || [];
+	};
+	
+	/**
+	 * Check if this emitter has `event` handlers.
+	 *
+	 * @param {String} event
+	 * @return {Boolean}
+	 * @api public
+	 */
+	
+	Emitter.prototype.hasListeners = function(event){
+	  return !! this.listeners(event).length;
+	};
+
+
+/***/ },
+/* 86 */,
+/* 87 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {/**
+	 * Module dependencies
+	 */
+	
+	var XMLHttpRequest = __webpack_require__(53);
+	var XHR = __webpack_require__(179);
+	var JSONP = __webpack_require__(178);
+	var websocket = __webpack_require__(180);
+	
+	/**
+	 * Export transports.
+	 */
+	
+	exports.polling = polling;
+	exports.websocket = websocket;
+	
+	/**
+	 * Polling transport polymorphic constructor.
+	 * Decides on xhr vs jsonp based on feature detection.
+	 *
+	 * @api private
+	 */
+	
+	function polling(opts){
+	  var xhr;
+	  var xd = false;
+	  var xs = false;
+	  var jsonp = false !== opts.jsonp;
+	
+	  if (global.location) {
+	    var isSSL = 'https:' == location.protocol;
+	    var port = location.port;
+	
+	    // some user agents have empty `location.port`
+	    if (!port) {
+	      port = isSSL ? 443 : 80;
+	    }
+	
+	    xd = opts.hostname != location.hostname || port != opts.port;
+	    xs = opts.secure != isSSL;
+	  }
+	
+	  opts.xdomain = xd;
+	  opts.xscheme = xs;
+	  xhr = new XMLHttpRequest(opts);
+	
+	  if ('open' in xhr && !opts.forceJSONP) {
+	    return new XHR(opts);
+	  } else {
+	    if (!jsonp) throw new Error('JSONP disabled');
+	    return new JSONP(opts);
+	  }
+	}
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 88 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Module dependencies.
+	 */
+	
+	var Transport = __webpack_require__(52);
+	var parseqs = __webpack_require__(58);
+	var parser = __webpack_require__(26);
+	var inherit = __webpack_require__(37);
+	var yeast = __webpack_require__(153);
+	var debug = __webpack_require__(38)('engine.io-client:polling');
+	
+	/**
+	 * Module exports.
+	 */
+	
+	module.exports = Polling;
+	
+	/**
+	 * Is XHR2 supported?
+	 */
+	
+	var hasXHR2 = (function() {
+	  var XMLHttpRequest = __webpack_require__(53);
+	  var xhr = new XMLHttpRequest({ xdomain: false });
+	  return null != xhr.responseType;
+	})();
+	
+	/**
+	 * Polling interface.
+	 *
+	 * @param {Object} opts
+	 * @api private
+	 */
+	
+	function Polling(opts){
+	  var forceBase64 = (opts && opts.forceBase64);
+	  if (!hasXHR2 || forceBase64) {
+	    this.supportsBinary = false;
+	  }
+	  Transport.call(this, opts);
+	}
+	
+	/**
+	 * Inherits from Transport.
+	 */
+	
+	inherit(Polling, Transport);
+	
+	/**
+	 * Transport name.
+	 */
+	
+	Polling.prototype.name = 'polling';
+	
+	/**
+	 * Opens the socket (triggers polling). We write a PING message to determine
+	 * when the transport is open.
+	 *
+	 * @api private
+	 */
+	
+	Polling.prototype.doOpen = function(){
+	  this.poll();
+	};
+	
+	/**
+	 * Pauses polling.
+	 *
+	 * @param {Function} callback upon buffers are flushed and transport is paused
+	 * @api private
+	 */
+	
+	Polling.prototype.pause = function(onPause){
+	  var pending = 0;
+	  var self = this;
+	
+	  this.readyState = 'pausing';
+	
+	  function pause(){
+	    debug('paused');
+	    self.readyState = 'paused';
+	    onPause();
+	  }
+	
+	  if (this.polling || !this.writable) {
+	    var total = 0;
+	
+	    if (this.polling) {
+	      debug('we are currently polling - waiting to pause');
+	      total++;
+	      this.once('pollComplete', function(){
+	        debug('pre-pause polling complete');
+	        --total || pause();
+	      });
+	    }
+	
+	    if (!this.writable) {
+	      debug('we are currently writing - waiting to pause');
+	      total++;
+	      this.once('drain', function(){
+	        debug('pre-pause writing complete');
+	        --total || pause();
+	      });
+	    }
+	  } else {
+	    pause();
+	  }
+	};
+	
+	/**
+	 * Starts polling cycle.
+	 *
+	 * @api public
+	 */
+	
+	Polling.prototype.poll = function(){
+	  debug('polling');
+	  this.polling = true;
+	  this.doPoll();
+	  this.emit('poll');
+	};
+	
+	/**
+	 * Overloads onData to detect payloads.
+	 *
+	 * @api private
+	 */
+	
+	Polling.prototype.onData = function(data){
+	  var self = this;
+	  debug('polling got data %s', data);
+	  var callback = function(packet, index, total) {
+	    // if its the first message we consider the transport open
+	    if ('opening' == self.readyState) {
+	      self.onOpen();
+	    }
+	
+	    // if its a close packet, we close the ongoing requests
+	    if ('close' == packet.type) {
+	      self.onClose();
+	      return false;
+	    }
+	
+	    // otherwise bypass onData and handle the message
+	    self.onPacket(packet);
+	  };
+	
+	  // decode payload
+	  parser.decodePayload(data, this.socket.binaryType, callback);
+	
+	  // if an event did not trigger closing
+	  if ('closed' != this.readyState) {
+	    // if we got data we're not polling
+	    this.polling = false;
+	    this.emit('pollComplete');
+	
+	    if ('open' == this.readyState) {
+	      this.poll();
+	    } else {
+	      debug('ignoring poll - transport state "%s"', this.readyState);
+	    }
+	  }
+	};
+	
+	/**
+	 * For polling, send a close packet.
+	 *
+	 * @api private
+	 */
+	
+	Polling.prototype.doClose = function(){
+	  var self = this;
+	
+	  function close(){
+	    debug('writing close packet');
+	    self.write([{ type: 'close' }]);
+	  }
+	
+	  if ('open' == this.readyState) {
+	    debug('transport open - closing');
+	    close();
+	  } else {
+	    // in case we're trying to close while
+	    // handshaking is in progress (GH-164)
+	    debug('transport not open - deferring close');
+	    this.once('open', close);
+	  }
+	};
+	
+	/**
+	 * Writes a packets payload.
+	 *
+	 * @param {Array} data packets
+	 * @param {Function} drain callback
+	 * @api private
+	 */
+	
+	Polling.prototype.write = function(packets){
+	  var self = this;
+	  this.writable = false;
+	  var callbackfn = function() {
+	    self.writable = true;
+	    self.emit('drain');
+	  };
+	
+	  var self = this;
+	  parser.encodePayload(packets, this.supportsBinary, function(data) {
+	    self.doWrite(data, callbackfn);
+	  });
+	};
+	
+	/**
+	 * Generates uri for connection.
+	 *
+	 * @api private
+	 */
+	
+	Polling.prototype.uri = function(){
+	  var query = this.query || {};
+	  var schema = this.secure ? 'https' : 'http';
+	  var port = '';
+	
+	  // cache busting is forced
+	  if (false !== this.timestampRequests) {
+	    query[this.timestampParam] = yeast();
+	  }
+	
+	  if (!this.supportsBinary && !query.sid) {
+	    query.b64 = 1;
+	  }
+	
+	  query = parseqs.encode(query);
+	
+	  // avoid port if default for schema
+	  if (this.port && (('https' == schema && this.port != 443) ||
+	     ('http' == schema && this.port != 80))) {
+	    port = ':' + this.port;
+	  }
+	
+	  // prepend ? to query
+	  if (query.length) {
+	    query = '?' + query;
+	  }
+	
+	  var ipv6 = this.hostname.indexOf(':') !== -1;
+	  return schema + '://' + (ipv6 ? '[' + this.hostname + ']' : this.hostname) + port + this.path + query;
+	};
+
+
+/***/ },
+/* 89 */
+/***/ function(module, exports) {
+
+	// removed by extract-text-webpack-plugin
+	module.exports = {"atk-arrow-blue":"UnitRender__atk-arrow-blue___1Ux-G","atk-arrow-green":"UnitRender__atk-arrow-green___2z1pX","atk-arrow-blue-active":"UnitRender__atk-arrow-blue-active___2HUVL","atk-arrow-green-active":"UnitRender__atk-arrow-green-active___13Knj","unit":"UnitRender__unit___3DSos","unit-dead":"UnitRender__unit-dead___2YYyZ","unit-top":"UnitRender__unit-top___1a7jO","unit-mid":"UnitRender__unit-mid___2g2Bt","unit-foot":"UnitRender__unit-foot___3wOXs","unit-top-ul":"UnitRender__unit-top-ul___1U8nK","unit-top-ur":"UnitRender__unit-top-ur___2mn3c","unit-top-u":"UnitRender__unit-top-u___1Rwhu","unit-mid-l":"UnitRender__unit-mid-l___17m-c","unit-mid-r":"UnitRender__unit-mid-r___31BR1","unit-foot-dl":"UnitRender__unit-foot-dl___6aiEF","unit-foot-dr":"UnitRender__unit-foot-dr___Nnpjq","unit-foot-d":"UnitRender__unit-foot-d___1PhgD","unit-foot-hp":"UnitRender__unit-foot-hp___1W88e","unit-foot-atk":"UnitRender__unit-foot-atk___3zVzz","card-unit":"UnitRender__card-unit___222nM","anim-atk-R":"UnitRender__anim-atk-R___1uL8d","atk-r":"UnitRender__atk-r___2aNjJ","anim-atk-L":"UnitRender__anim-atk-L___1Yscx","atk-l":"UnitRender__atk-l___3NDJb","anim-atk-U":"UnitRender__anim-atk-U___3epKg","atk-u":"UnitRender__atk-u___2ZMWE","anim-atk-D":"UnitRender__anim-atk-D___3t1Tc","atk-d":"UnitRender__atk-d___1xI6S","anim-atk-UR":"UnitRender__anim-atk-UR___2Zrll","atk-u-r":"UnitRender__atk-u-r___2P7f-","anim-atk-UL":"UnitRender__anim-atk-UL___syyN0","atk-u-l":"UnitRender__atk-u-l___HlGFR","anim-atk-DR":"UnitRender__anim-atk-DR___2l5Jq","atk-d-r":"UnitRender__atk-d-r___1_PsN","anim-atk-DL":"UnitRender__anim-atk-DL___2AgN8","atk-d-l":"UnitRender__atk-d-l___2Ucwf","unit-ram":"UnitRender__unit-ram___2_pBX","unit-knight":"UnitRender__unit-knight___2zkO1","unit-swordsman":"UnitRender__unit-swordsman___2D_v_","unit-assasin":"UnitRender__unit-assasin___1ikkr","unit-dog":"UnitRender__unit-dog___2f4G3","unit-dualist":"UnitRender__unit-dualist___2uLca"};
+
+/***/ },
+/* 90 */
+/***/ function(module, exports) {
+
+	// removed by extract-text-webpack-plugin
+	module.exports = {"hidden":"style__hidden___folzu","app":"style__app___iKaHF","card":"style__card___1Oqck","unit":"style__unit___CrvjQ","turn":"style__turn___FtYen","deck":"style__deck___3wu64","end-game":"style__end-game___-TTIH","myCard1":"style__myCard1___EWvHn","myCard2":"style__myCard2___Ej01i","myCard3":"style__myCard3___3vkRg","myCard4":"style__myCard4___1o-kQ","myCard5":"style__myCard5___1y9-G","hand-active":"style__hand-active___3oIJF","log-bar-head":"style__log-bar-head___9QgEv","shows-from-r-to-l":"style__shows-from-r-to-l___3eK5-"};
+
+/***/ },
+/* 91 */,
+/* 92 */,
+/* 93 */,
+/* 94 */,
+/* 95 */,
+/* 96 */,
+/* 97 */,
+/* 98 */,
+/* 99 */,
+/* 100 */,
+/* 101 */,
+/* 102 */,
+/* 103 */,
+/* 104 */,
+/* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6209,1250 +7470,6 @@ webpackJsonp([1],[
 	}));
 
 /***/ },
-/* 59 */
-/***/ function(module, exports) {
-
-	/**
-	 * Compiles a querystring
-	 * Returns string representation of the object
-	 *
-	 * @param {Object}
-	 * @api private
-	 */
-	
-	exports.encode = function (obj) {
-	  var str = '';
-	
-	  for (var i in obj) {
-	    if (obj.hasOwnProperty(i)) {
-	      if (str.length) str += '&';
-	      str += encodeURIComponent(i) + '=' + encodeURIComponent(obj[i]);
-	    }
-	  }
-	
-	  return str;
-	};
-	
-	/**
-	 * Parses a simple querystring into an object
-	 *
-	 * @param {String} qs
-	 * @api private
-	 */
-	
-	exports.decode = function(qs){
-	  var qry = {};
-	  var pairs = qs.split('&');
-	  for (var i = 0, l = pairs.length; i < l; i++) {
-	    var pair = pairs[i].split('=');
-	    qry[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
-	  }
-	  return qry;
-	};
-
-
-/***/ },
-/* 60 */,
-/* 61 */,
-/* 62 */,
-/* 63 */,
-/* 64 */,
-/* 65 */,
-/* 66 */,
-/* 67 */,
-/* 68 */,
-/* 69 */,
-/* 70 */,
-/* 71 */,
-/* 72 */,
-/* 73 */,
-/* 74 */,
-/* 75 */,
-/* 76 */,
-/* 77 */,
-/* 78 */,
-/* 79 */,
-/* 80 */,
-/* 81 */,
-/* 82 */
-/***/ function(module, exports, __webpack_require__) {
-
-	
-	/**
-	 * Module dependencies.
-	 */
-	
-	var debug = __webpack_require__(36)('socket.io-parser');
-	var json = __webpack_require__(315);
-	var isArray = __webpack_require__(41);
-	var Emitter = __webpack_require__(317);
-	var binary = __webpack_require__(316);
-	var isBuf = __webpack_require__(150);
-	
-	/**
-	 * Protocol version.
-	 *
-	 * @api public
-	 */
-	
-	exports.protocol = 4;
-	
-	/**
-	 * Packet types.
-	 *
-	 * @api public
-	 */
-	
-	exports.types = [
-	  'CONNECT',
-	  'DISCONNECT',
-	  'EVENT',
-	  'BINARY_EVENT',
-	  'ACK',
-	  'BINARY_ACK',
-	  'ERROR'
-	];
-	
-	/**
-	 * Packet type `connect`.
-	 *
-	 * @api public
-	 */
-	
-	exports.CONNECT = 0;
-	
-	/**
-	 * Packet type `disconnect`.
-	 *
-	 * @api public
-	 */
-	
-	exports.DISCONNECT = 1;
-	
-	/**
-	 * Packet type `event`.
-	 *
-	 * @api public
-	 */
-	
-	exports.EVENT = 2;
-	
-	/**
-	 * Packet type `ack`.
-	 *
-	 * @api public
-	 */
-	
-	exports.ACK = 3;
-	
-	/**
-	 * Packet type `error`.
-	 *
-	 * @api public
-	 */
-	
-	exports.ERROR = 4;
-	
-	/**
-	 * Packet type 'binary event'
-	 *
-	 * @api public
-	 */
-	
-	exports.BINARY_EVENT = 5;
-	
-	/**
-	 * Packet type `binary ack`. For acks with binary arguments.
-	 *
-	 * @api public
-	 */
-	
-	exports.BINARY_ACK = 6;
-	
-	/**
-	 * Encoder constructor.
-	 *
-	 * @api public
-	 */
-	
-	exports.Encoder = Encoder;
-	
-	/**
-	 * Decoder constructor.
-	 *
-	 * @api public
-	 */
-	
-	exports.Decoder = Decoder;
-	
-	/**
-	 * A socket.io Encoder instance
-	 *
-	 * @api public
-	 */
-	
-	function Encoder() {}
-	
-	/**
-	 * Encode a packet as a single string if non-binary, or as a
-	 * buffer sequence, depending on packet type.
-	 *
-	 * @param {Object} obj - packet object
-	 * @param {Function} callback - function to handle encodings (likely engine.write)
-	 * @return Calls callback with Array of encodings
-	 * @api public
-	 */
-	
-	Encoder.prototype.encode = function(obj, callback){
-	  debug('encoding packet %j', obj);
-	
-	  if (exports.BINARY_EVENT == obj.type || exports.BINARY_ACK == obj.type) {
-	    encodeAsBinary(obj, callback);
-	  }
-	  else {
-	    var encoding = encodeAsString(obj);
-	    callback([encoding]);
-	  }
-	};
-	
-	/**
-	 * Encode packet as string.
-	 *
-	 * @param {Object} packet
-	 * @return {String} encoded
-	 * @api private
-	 */
-	
-	function encodeAsString(obj) {
-	  var str = '';
-	  var nsp = false;
-	
-	  // first is type
-	  str += obj.type;
-	
-	  // attachments if we have them
-	  if (exports.BINARY_EVENT == obj.type || exports.BINARY_ACK == obj.type) {
-	    str += obj.attachments;
-	    str += '-';
-	  }
-	
-	  // if we have a namespace other than `/`
-	  // we append it followed by a comma `,`
-	  if (obj.nsp && '/' != obj.nsp) {
-	    nsp = true;
-	    str += obj.nsp;
-	  }
-	
-	  // immediately followed by the id
-	  if (null != obj.id) {
-	    if (nsp) {
-	      str += ',';
-	      nsp = false;
-	    }
-	    str += obj.id;
-	  }
-	
-	  // json data
-	  if (null != obj.data) {
-	    if (nsp) str += ',';
-	    str += json.stringify(obj.data);
-	  }
-	
-	  debug('encoded %j as %s', obj, str);
-	  return str;
-	}
-	
-	/**
-	 * Encode packet as 'buffer sequence' by removing blobs, and
-	 * deconstructing packet into object with placeholders and
-	 * a list of buffers.
-	 *
-	 * @param {Object} packet
-	 * @return {Buffer} encoded
-	 * @api private
-	 */
-	
-	function encodeAsBinary(obj, callback) {
-	
-	  function writeEncoding(bloblessData) {
-	    var deconstruction = binary.deconstructPacket(bloblessData);
-	    var pack = encodeAsString(deconstruction.packet);
-	    var buffers = deconstruction.buffers;
-	
-	    buffers.unshift(pack); // add packet info to beginning of data list
-	    callback(buffers); // write all the buffers
-	  }
-	
-	  binary.removeBlobs(obj, writeEncoding);
-	}
-	
-	/**
-	 * A socket.io Decoder instance
-	 *
-	 * @return {Object} decoder
-	 * @api public
-	 */
-	
-	function Decoder() {
-	  this.reconstructor = null;
-	}
-	
-	/**
-	 * Mix in `Emitter` with Decoder.
-	 */
-	
-	Emitter(Decoder.prototype);
-	
-	/**
-	 * Decodes an ecoded packet string into packet JSON.
-	 *
-	 * @param {String} obj - encoded packet
-	 * @return {Object} packet
-	 * @api public
-	 */
-	
-	Decoder.prototype.add = function(obj) {
-	  var packet;
-	  if ('string' == typeof obj) {
-	    packet = decodeString(obj);
-	    if (exports.BINARY_EVENT == packet.type || exports.BINARY_ACK == packet.type) { // binary packet's json
-	      this.reconstructor = new BinaryReconstructor(packet);
-	
-	      // no attachments, labeled binary but no binary data to follow
-	      if (this.reconstructor.reconPack.attachments === 0) {
-	        this.emit('decoded', packet);
-	      }
-	    } else { // non-binary full packet
-	      this.emit('decoded', packet);
-	    }
-	  }
-	  else if (isBuf(obj) || obj.base64) { // raw binary data
-	    if (!this.reconstructor) {
-	      throw new Error('got binary data when not reconstructing a packet');
-	    } else {
-	      packet = this.reconstructor.takeBinaryData(obj);
-	      if (packet) { // received final buffer
-	        this.reconstructor = null;
-	        this.emit('decoded', packet);
-	      }
-	    }
-	  }
-	  else {
-	    throw new Error('Unknown type: ' + obj);
-	  }
-	};
-	
-	/**
-	 * Decode a packet String (JSON data)
-	 *
-	 * @param {String} str
-	 * @return {Object} packet
-	 * @api private
-	 */
-	
-	function decodeString(str) {
-	  var p = {};
-	  var i = 0;
-	
-	  // look up type
-	  p.type = Number(str.charAt(0));
-	  if (null == exports.types[p.type]) return error();
-	
-	  // look up attachments if type binary
-	  if (exports.BINARY_EVENT == p.type || exports.BINARY_ACK == p.type) {
-	    var buf = '';
-	    while (str.charAt(++i) != '-') {
-	      buf += str.charAt(i);
-	      if (i == str.length) break;
-	    }
-	    if (buf != Number(buf) || str.charAt(i) != '-') {
-	      throw new Error('Illegal attachments');
-	    }
-	    p.attachments = Number(buf);
-	  }
-	
-	  // look up namespace (if any)
-	  if ('/' == str.charAt(i + 1)) {
-	    p.nsp = '';
-	    while (++i) {
-	      var c = str.charAt(i);
-	      if (',' == c) break;
-	      p.nsp += c;
-	      if (i == str.length) break;
-	    }
-	  } else {
-	    p.nsp = '/';
-	  }
-	
-	  // look up id
-	  var next = str.charAt(i + 1);
-	  if ('' !== next && Number(next) == next) {
-	    p.id = '';
-	    while (++i) {
-	      var c = str.charAt(i);
-	      if (null == c || Number(c) != c) {
-	        --i;
-	        break;
-	      }
-	      p.id += str.charAt(i);
-	      if (i == str.length) break;
-	    }
-	    p.id = Number(p.id);
-	  }
-	
-	  // look up json data
-	  if (str.charAt(++i)) {
-	    try {
-	      p.data = json.parse(str.substr(i));
-	    } catch(e){
-	      return error();
-	    }
-	  }
-	
-	  debug('decoded %s as %j', str, p);
-	  return p;
-	}
-	
-	/**
-	 * Deallocates a parser's resources
-	 *
-	 * @api public
-	 */
-	
-	Decoder.prototype.destroy = function() {
-	  if (this.reconstructor) {
-	    this.reconstructor.finishedReconstruction();
-	  }
-	};
-	
-	/**
-	 * A manager of a binary event's 'buffer sequence'. Should
-	 * be constructed whenever a packet of type BINARY_EVENT is
-	 * decoded.
-	 *
-	 * @param {Object} packet
-	 * @return {BinaryReconstructor} initialized reconstructor
-	 * @api private
-	 */
-	
-	function BinaryReconstructor(packet) {
-	  this.reconPack = packet;
-	  this.buffers = [];
-	}
-	
-	/**
-	 * Method to be called when binary data received from connection
-	 * after a BINARY_EVENT packet.
-	 *
-	 * @param {Buffer | ArrayBuffer} binData - the raw binary data received
-	 * @return {null | Object} returns null if more binary data is expected or
-	 *   a reconstructed packet object if all buffers have been received.
-	 * @api private
-	 */
-	
-	BinaryReconstructor.prototype.takeBinaryData = function(binData) {
-	  this.buffers.push(binData);
-	  if (this.buffers.length == this.reconPack.attachments) { // done with buffer list
-	    var packet = binary.reconstructPacket(this.reconPack, this.buffers);
-	    this.finishedReconstruction();
-	    return packet;
-	  }
-	  return null;
-	};
-	
-	/**
-	 * Cleans up binary packet reconstruction variables.
-	 *
-	 * @api private
-	 */
-	
-	BinaryReconstructor.prototype.finishedReconstruction = function() {
-	  this.reconPack = null;
-	  this.buffers = [];
-	};
-	
-	function error(data){
-	  return {
-	    type: exports.ERROR,
-	    data: 'parser error'
-	  };
-	}
-
-
-/***/ },
-/* 83 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.sendCreate = sendCreate;
-	exports.sendJoin = sendJoin;
-	
-	var _react = __webpack_require__(2);
-	
-	var _react2 = _interopRequireDefault(_react);
-	
-	var _reactDom = __webpack_require__(222);
-	
-	var _reactDom2 = _interopRequireDefault(_reactDom);
-	
-	var _reactRouter = __webpack_require__(42);
-	
-	var _reactRouter2 = _interopRequireDefault(_reactRouter);
-	
-	var _redux = __webpack_require__(81);
-	
-	var _reactRedux = __webpack_require__(30);
-	
-	var _socket = __webpack_require__(312);
-	
-	var _socket2 = _interopRequireDefault(_socket);
-	
-	var _reducer = __webpack_require__(157);
-	
-	var _reducer2 = _interopRequireDefault(_reducer);
-	
-	var _action_creators = __webpack_require__(51);
-	
-	var _remote_action_middleware = __webpack_require__(158);
-	
-	var _remote_action_middleware2 = _interopRequireDefault(_remote_action_middleware);
-	
-	var _client_id = __webpack_require__(156);
-	
-	var _client_id2 = _interopRequireDefault(_client_id);
-	
-	var _App = __webpack_require__(159);
-	
-	var _App2 = _interopRequireDefault(_App);
-	
-	var _Start = __webpack_require__(169);
-	
-	var _Game = __webpack_require__(164);
-	
-	var _style = __webpack_require__(91);
-	
-	var _style2 = _interopRequireDefault(_style);
-	
-	var _immutable = __webpack_require__(58);
-	
-	var _immutable2 = _interopRequireDefault(_immutable);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	var socket = (0, _socket2.default)(location.protocol + '//' + location.hostname + ':3001');
-	
-	socket.on('state', function (state) {
-	  var roomId = store.getState().get('roomId');
-	  if (state[roomId] && state[roomId].fieldAnimation && state[roomId].fieldAnimation.length > 0) {
-	    store.dispatch((0, _action_creators.setState)(store.getState().merge({ curPlayer: state[roomId].curPlayer }).toJS(), state['rooms']));
-	    var maxLoops = state[roomId].fieldAnimation.length;
-	    var counter = 0;
-	    (function next() {
-	      if (counter++ >= maxLoops) return;
-	      setTimeout(function () {
-	        store.dispatch((0, _action_creators.setField)(state[roomId].fieldAnimation[counter - 1]));
-	        next();
-	      }, 1000);
-	    })();
-	    setTimeout(function () {
-	      store.dispatch((0, _action_creators.setState)(state[roomId], state['rooms']));
-	    }, 1000 * (maxLoops + 1));
-	  } else {
-	    store.dispatch((0, _action_creators.setState)(state[roomId], state['rooms']));
-	  }
-	});
-	
-	function sendCreate(roomId, playerId, name) {
-	  socket.emit('create', roomId, playerId, name);
-	}
-	
-	function sendJoin(roomId, playerId, name) {
-	  socket.emit('join', roomId, playerId, name);
-	}
-	
-	socket.on('your room id', function (idForClient) {
-	  return store.dispatch((0, _action_creators.setRoomId)(idForClient));
-	});
-	
-	['connect', 'connect_error', 'connect_timeout', 'reconnect', 'reconnecting', 'reconnect_error', 'reconnect_failed'].forEach(function (ev) {
-	  return socket.on(ev, function () {
-	    return store.dispatch((0, _action_creators.setConnectionState)(ev, socket.connected));
-	  });
-	});
-	
-	var createStoreWithMiddleware = (0, _redux.applyMiddleware)((0, _remote_action_middleware2.default)(socket))(_redux.createStore);
-	
-	var store = createStoreWithMiddleware(_reducer2.default);
-	store.dispatch((0, _action_creators.setClientId)((0, _client_id2.default)()));
-	
-	store.dispatch((0, _action_creators.setPlayerHand)([{ id: 1, info: 'cost 2 mana', hp: 10, atk: 1 }, { id: 2, info: 'cost 4 mana', hp: 5, atk: 1 }, { id: 3, info: 'cost 6 mana', hp: 9, atk: 6 }]));
-	
-	store.dispatch((0, _action_creators.setEnemyHand)([{ id: 1 }, { id: 2 }, { id: 3 }]));
-	
-	store.dispatch((0, _action_creators.setYourPlayerNumber)());
-	
-	var routes = _react2.default.createElement(
-	  _reactRouter.Route,
-	  { component: _App2.default },
-	  _react2.default.createElement(_reactRouter.Route, { path: '/', component: _Start.StartContainer }),
-	  _react2.default.createElement(_reactRouter.Route, { path: '/game', component: _Game.GameContainer })
-	);
-	
-	_reactDom2.default.render(_react2.default.createElement(
-	  _reactRedux.Provider,
-	  { store: store, className: _style2.default['app'] },
-	  _react2.default.createElement(
-	    _reactRouter2.default,
-	    null,
-	    routes
-	  )
-	), document.getElementById('app'));
-
-/***/ },
-/* 84 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	var _UnitRender = __webpack_require__(90);
-	
-	var _UnitRender2 = _interopRequireDefault(_UnitRender);
-	
-	var _react = __webpack_require__(2);
-	
-	var _react2 = _interopRequireDefault(_react);
-	
-	var _reactAddonsPureRenderMixin = __webpack_require__(16);
-	
-	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	var Unit = _react2.default.createClass({
-	  displayName: 'Unit',
-	
-	  mixins: [_reactAddonsPureRenderMixin2.default],
-	  propTypes: {
-	    data: _react.PropTypes.object.isRequired,
-	    arrowCss: _react.PropTypes.string.isRequired,
-	    died: _react.PropTypes.bool.isRequired,
-	    inCard: _react.PropTypes.bool.isRequired,
-	    atkDirect: _react.PropTypes.string.isRequired
-	  },
-	  getAtkCss: function getAtkCss(direction) {
-	    if (direction) {
-	      return ' ' + _UnitRender2.default['anim-atk-' + direction];
-	    } else {
-	      return '';
-	    }
-	  },
-	  getOpacity: function getOpacity(direction) {
-	    if (this.props.data && this.props.data.direction.find(function (val) {
-	      return val === direction;
-	    })) {
-	      return 1;
-	    } else {
-	      return 0;
-	    }
-	  },
-	  render: function render() {
-	    var hp = this.props.data ? this.props.data.hp : '';
-	    var atk = this.props.data ? this.props.data.atk : '';
-	    var UStyle = { opacity: this.getOpacity('U') };
-	    var DStyle = { opacity: this.getOpacity('D') };
-	    var RStyle = { opacity: this.getOpacity('R') };
-	    var LStyle = { opacity: this.getOpacity('L') };
-	    var ULStyle = { opacity: this.getOpacity('UL') };
-	    var URStyle = { opacity: this.getOpacity('UR') };
-	    var DLStyle = { opacity: this.getOpacity('DL') };
-	    var DRStyle = { opacity: this.getOpacity('DR') };
-	    var backCss = ' ' + _UnitRender2.default['unit-' + this.props.data.sprite];
-	    var arrowCss = ' ' + _UnitRender2.default[this.props.arrowCss];
-	    var deadCss = this.props.died ? ' ' + _UnitRender2.default['unit-dead'] : '';
-	    var atkCss = this.getAtkCss(this.props.atkDirect);
-	    var whereCss = this.props.inCard ? _UnitRender2.default['card-unit'] : _UnitRender2.default['unit'];
-	    return _react2.default.createElement(
-	      'div',
-	      { className: whereCss + backCss + deadCss + atkCss },
-	      _react2.default.createElement(
-	        'div',
-	        { className: _UnitRender2.default['unit-top'] },
-	        _react2.default.createElement('div', { style: ULStyle, className: _UnitRender2.default['unit-top-ul'] + arrowCss }),
-	        _react2.default.createElement('div', { style: UStyle, className: _UnitRender2.default['unit-top-u'] + arrowCss }),
-	        _react2.default.createElement('div', { style: URStyle, className: _UnitRender2.default['unit-top-ur'] + arrowCss })
-	      ),
-	      _react2.default.createElement(
-	        'div',
-	        { className: _UnitRender2.default['unit-mid'] },
-	        _react2.default.createElement('div', { style: LStyle, className: _UnitRender2.default['unit-mid-l'] + arrowCss }),
-	        _react2.default.createElement('div', { style: RStyle, className: _UnitRender2.default['unit-mid-r'] + arrowCss })
-	      ),
-	      _react2.default.createElement(
-	        'div',
-	        { className: _UnitRender2.default['unit-foot'] },
-	        _react2.default.createElement('div', { style: DLStyle, className: _UnitRender2.default['unit-foot-dl'] + arrowCss }),
-	        _react2.default.createElement(
-	          'div',
-	          { className: _UnitRender2.default['unit-foot-hp'] },
-	          hp
-	        ),
-	        _react2.default.createElement('div', { style: DStyle, className: _UnitRender2.default['unit-foot-d'] + arrowCss }),
-	        _react2.default.createElement(
-	          'div',
-	          { className: _UnitRender2.default['unit-foot-atk'] },
-	          atk
-	        ),
-	        _react2.default.createElement('div', { style: DRStyle, className: _UnitRender2.default['unit-foot-dr'] + arrowCss })
-	      )
-	    );
-	  }
-	});
-	
-	module.exports = Unit;
-
-/***/ },
-/* 85 */
-/***/ function(module, exports) {
-
-	/**
-	 * Slice reference.
-	 */
-	
-	var slice = [].slice;
-	
-	/**
-	 * Bind `obj` to `fn`.
-	 *
-	 * @param {Object} obj
-	 * @param {Function|String} fn or string
-	 * @return {Function}
-	 * @api public
-	 */
-	
-	module.exports = function(obj, fn){
-	  if ('string' == typeof fn) fn = obj[fn];
-	  if ('function' != typeof fn) throw new Error('bind() requires a function');
-	  var args = slice.call(arguments, 2);
-	  return function(){
-	    return fn.apply(obj, args.concat(slice.call(arguments)));
-	  }
-	};
-
-
-/***/ },
-/* 86 */
-/***/ function(module, exports) {
-
-	
-	/**
-	 * Expose `Emitter`.
-	 */
-	
-	module.exports = Emitter;
-	
-	/**
-	 * Initialize a new `Emitter`.
-	 *
-	 * @api public
-	 */
-	
-	function Emitter(obj) {
-	  if (obj) return mixin(obj);
-	};
-	
-	/**
-	 * Mixin the emitter properties.
-	 *
-	 * @param {Object} obj
-	 * @return {Object}
-	 * @api private
-	 */
-	
-	function mixin(obj) {
-	  for (var key in Emitter.prototype) {
-	    obj[key] = Emitter.prototype[key];
-	  }
-	  return obj;
-	}
-	
-	/**
-	 * Listen on the given `event` with `fn`.
-	 *
-	 * @param {String} event
-	 * @param {Function} fn
-	 * @return {Emitter}
-	 * @api public
-	 */
-	
-	Emitter.prototype.on =
-	Emitter.prototype.addEventListener = function(event, fn){
-	  this._callbacks = this._callbacks || {};
-	  (this._callbacks['$' + event] = this._callbacks['$' + event] || [])
-	    .push(fn);
-	  return this;
-	};
-	
-	/**
-	 * Adds an `event` listener that will be invoked a single
-	 * time then automatically removed.
-	 *
-	 * @param {String} event
-	 * @param {Function} fn
-	 * @return {Emitter}
-	 * @api public
-	 */
-	
-	Emitter.prototype.once = function(event, fn){
-	  function on() {
-	    this.off(event, on);
-	    fn.apply(this, arguments);
-	  }
-	
-	  on.fn = fn;
-	  this.on(event, on);
-	  return this;
-	};
-	
-	/**
-	 * Remove the given callback for `event` or all
-	 * registered callbacks.
-	 *
-	 * @param {String} event
-	 * @param {Function} fn
-	 * @return {Emitter}
-	 * @api public
-	 */
-	
-	Emitter.prototype.off =
-	Emitter.prototype.removeListener =
-	Emitter.prototype.removeAllListeners =
-	Emitter.prototype.removeEventListener = function(event, fn){
-	  this._callbacks = this._callbacks || {};
-	
-	  // all
-	  if (0 == arguments.length) {
-	    this._callbacks = {};
-	    return this;
-	  }
-	
-	  // specific event
-	  var callbacks = this._callbacks['$' + event];
-	  if (!callbacks) return this;
-	
-	  // remove all handlers
-	  if (1 == arguments.length) {
-	    delete this._callbacks['$' + event];
-	    return this;
-	  }
-	
-	  // remove specific handler
-	  var cb;
-	  for (var i = 0; i < callbacks.length; i++) {
-	    cb = callbacks[i];
-	    if (cb === fn || cb.fn === fn) {
-	      callbacks.splice(i, 1);
-	      break;
-	    }
-	  }
-	  return this;
-	};
-	
-	/**
-	 * Emit `event` with the given args.
-	 *
-	 * @param {String} event
-	 * @param {Mixed} ...
-	 * @return {Emitter}
-	 */
-	
-	Emitter.prototype.emit = function(event){
-	  this._callbacks = this._callbacks || {};
-	  var args = [].slice.call(arguments, 1)
-	    , callbacks = this._callbacks['$' + event];
-	
-	  if (callbacks) {
-	    callbacks = callbacks.slice(0);
-	    for (var i = 0, len = callbacks.length; i < len; ++i) {
-	      callbacks[i].apply(this, args);
-	    }
-	  }
-	
-	  return this;
-	};
-	
-	/**
-	 * Return array of callbacks for `event`.
-	 *
-	 * @param {String} event
-	 * @return {Array}
-	 * @api public
-	 */
-	
-	Emitter.prototype.listeners = function(event){
-	  this._callbacks = this._callbacks || {};
-	  return this._callbacks['$' + event] || [];
-	};
-	
-	/**
-	 * Check if this emitter has `event` handlers.
-	 *
-	 * @param {String} event
-	 * @return {Boolean}
-	 * @api public
-	 */
-	
-	Emitter.prototype.hasListeners = function(event){
-	  return !! this.listeners(event).length;
-	};
-
-
-/***/ },
-/* 87 */,
-/* 88 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(global) {/**
-	 * Module dependencies
-	 */
-	
-	var XMLHttpRequest = __webpack_require__(53);
-	var XHR = __webpack_require__(179);
-	var JSONP = __webpack_require__(178);
-	var websocket = __webpack_require__(180);
-	
-	/**
-	 * Export transports.
-	 */
-	
-	exports.polling = polling;
-	exports.websocket = websocket;
-	
-	/**
-	 * Polling transport polymorphic constructor.
-	 * Decides on xhr vs jsonp based on feature detection.
-	 *
-	 * @api private
-	 */
-	
-	function polling(opts){
-	  var xhr;
-	  var xd = false;
-	  var xs = false;
-	  var jsonp = false !== opts.jsonp;
-	
-	  if (global.location) {
-	    var isSSL = 'https:' == location.protocol;
-	    var port = location.port;
-	
-	    // some user agents have empty `location.port`
-	    if (!port) {
-	      port = isSSL ? 443 : 80;
-	    }
-	
-	    xd = opts.hostname != location.hostname || port != opts.port;
-	    xs = opts.secure != isSSL;
-	  }
-	
-	  opts.xdomain = xd;
-	  opts.xscheme = xs;
-	  xhr = new XMLHttpRequest(opts);
-	
-	  if ('open' in xhr && !opts.forceJSONP) {
-	    return new XHR(opts);
-	  } else {
-	    if (!jsonp) throw new Error('JSONP disabled');
-	    return new JSONP(opts);
-	  }
-	}
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
-
-/***/ },
-/* 89 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/**
-	 * Module dependencies.
-	 */
-	
-	var Transport = __webpack_require__(52);
-	var parseqs = __webpack_require__(59);
-	var parser = __webpack_require__(26);
-	var inherit = __webpack_require__(37);
-	var yeast = __webpack_require__(153);
-	var debug = __webpack_require__(38)('engine.io-client:polling');
-	
-	/**
-	 * Module exports.
-	 */
-	
-	module.exports = Polling;
-	
-	/**
-	 * Is XHR2 supported?
-	 */
-	
-	var hasXHR2 = (function() {
-	  var XMLHttpRequest = __webpack_require__(53);
-	  var xhr = new XMLHttpRequest({ xdomain: false });
-	  return null != xhr.responseType;
-	})();
-	
-	/**
-	 * Polling interface.
-	 *
-	 * @param {Object} opts
-	 * @api private
-	 */
-	
-	function Polling(opts){
-	  var forceBase64 = (opts && opts.forceBase64);
-	  if (!hasXHR2 || forceBase64) {
-	    this.supportsBinary = false;
-	  }
-	  Transport.call(this, opts);
-	}
-	
-	/**
-	 * Inherits from Transport.
-	 */
-	
-	inherit(Polling, Transport);
-	
-	/**
-	 * Transport name.
-	 */
-	
-	Polling.prototype.name = 'polling';
-	
-	/**
-	 * Opens the socket (triggers polling). We write a PING message to determine
-	 * when the transport is open.
-	 *
-	 * @api private
-	 */
-	
-	Polling.prototype.doOpen = function(){
-	  this.poll();
-	};
-	
-	/**
-	 * Pauses polling.
-	 *
-	 * @param {Function} callback upon buffers are flushed and transport is paused
-	 * @api private
-	 */
-	
-	Polling.prototype.pause = function(onPause){
-	  var pending = 0;
-	  var self = this;
-	
-	  this.readyState = 'pausing';
-	
-	  function pause(){
-	    debug('paused');
-	    self.readyState = 'paused';
-	    onPause();
-	  }
-	
-	  if (this.polling || !this.writable) {
-	    var total = 0;
-	
-	    if (this.polling) {
-	      debug('we are currently polling - waiting to pause');
-	      total++;
-	      this.once('pollComplete', function(){
-	        debug('pre-pause polling complete');
-	        --total || pause();
-	      });
-	    }
-	
-	    if (!this.writable) {
-	      debug('we are currently writing - waiting to pause');
-	      total++;
-	      this.once('drain', function(){
-	        debug('pre-pause writing complete');
-	        --total || pause();
-	      });
-	    }
-	  } else {
-	    pause();
-	  }
-	};
-	
-	/**
-	 * Starts polling cycle.
-	 *
-	 * @api public
-	 */
-	
-	Polling.prototype.poll = function(){
-	  debug('polling');
-	  this.polling = true;
-	  this.doPoll();
-	  this.emit('poll');
-	};
-	
-	/**
-	 * Overloads onData to detect payloads.
-	 *
-	 * @api private
-	 */
-	
-	Polling.prototype.onData = function(data){
-	  var self = this;
-	  debug('polling got data %s', data);
-	  var callback = function(packet, index, total) {
-	    // if its the first message we consider the transport open
-	    if ('opening' == self.readyState) {
-	      self.onOpen();
-	    }
-	
-	    // if its a close packet, we close the ongoing requests
-	    if ('close' == packet.type) {
-	      self.onClose();
-	      return false;
-	    }
-	
-	    // otherwise bypass onData and handle the message
-	    self.onPacket(packet);
-	  };
-	
-	  // decode payload
-	  parser.decodePayload(data, this.socket.binaryType, callback);
-	
-	  // if an event did not trigger closing
-	  if ('closed' != this.readyState) {
-	    // if we got data we're not polling
-	    this.polling = false;
-	    this.emit('pollComplete');
-	
-	    if ('open' == this.readyState) {
-	      this.poll();
-	    } else {
-	      debug('ignoring poll - transport state "%s"', this.readyState);
-	    }
-	  }
-	};
-	
-	/**
-	 * For polling, send a close packet.
-	 *
-	 * @api private
-	 */
-	
-	Polling.prototype.doClose = function(){
-	  var self = this;
-	
-	  function close(){
-	    debug('writing close packet');
-	    self.write([{ type: 'close' }]);
-	  }
-	
-	  if ('open' == this.readyState) {
-	    debug('transport open - closing');
-	    close();
-	  } else {
-	    // in case we're trying to close while
-	    // handshaking is in progress (GH-164)
-	    debug('transport not open - deferring close');
-	    this.once('open', close);
-	  }
-	};
-	
-	/**
-	 * Writes a packets payload.
-	 *
-	 * @param {Array} data packets
-	 * @param {Function} drain callback
-	 * @api private
-	 */
-	
-	Polling.prototype.write = function(packets){
-	  var self = this;
-	  this.writable = false;
-	  var callbackfn = function() {
-	    self.writable = true;
-	    self.emit('drain');
-	  };
-	
-	  var self = this;
-	  parser.encodePayload(packets, this.supportsBinary, function(data) {
-	    self.doWrite(data, callbackfn);
-	  });
-	};
-	
-	/**
-	 * Generates uri for connection.
-	 *
-	 * @api private
-	 */
-	
-	Polling.prototype.uri = function(){
-	  var query = this.query || {};
-	  var schema = this.secure ? 'https' : 'http';
-	  var port = '';
-	
-	  // cache busting is forced
-	  if (false !== this.timestampRequests) {
-	    query[this.timestampParam] = yeast();
-	  }
-	
-	  if (!this.supportsBinary && !query.sid) {
-	    query.b64 = 1;
-	  }
-	
-	  query = parseqs.encode(query);
-	
-	  // avoid port if default for schema
-	  if (this.port && (('https' == schema && this.port != 443) ||
-	     ('http' == schema && this.port != 80))) {
-	    port = ':' + this.port;
-	  }
-	
-	  // prepend ? to query
-	  if (query.length) {
-	    query = '?' + query;
-	  }
-	
-	  var ipv6 = this.hostname.indexOf(':') !== -1;
-	  return schema + '://' + (ipv6 ? '[' + this.hostname + ']' : this.hostname) + port + this.path + query;
-	};
-
-
-/***/ },
-/* 90 */
-/***/ function(module, exports) {
-
-	// removed by extract-text-webpack-plugin
-	module.exports = {"atk-arrow-blue":"UnitRender__atk-arrow-blue___1Ux-G","atk-arrow-green":"UnitRender__atk-arrow-green___2z1pX","atk-arrow-blue-active":"UnitRender__atk-arrow-blue-active___2HUVL","atk-arrow-green-active":"UnitRender__atk-arrow-green-active___13Knj","unit":"UnitRender__unit___3DSos","unit-dead":"UnitRender__unit-dead___2YYyZ","unit-top":"UnitRender__unit-top___1a7jO","unit-mid":"UnitRender__unit-mid___2g2Bt","unit-foot":"UnitRender__unit-foot___3wOXs","unit-top-ul":"UnitRender__unit-top-ul___1U8nK","unit-top-ur":"UnitRender__unit-top-ur___2mn3c","unit-top-u":"UnitRender__unit-top-u___1Rwhu","unit-mid-l":"UnitRender__unit-mid-l___17m-c","unit-mid-r":"UnitRender__unit-mid-r___31BR1","unit-foot-dl":"UnitRender__unit-foot-dl___6aiEF","unit-foot-dr":"UnitRender__unit-foot-dr___Nnpjq","unit-foot-d":"UnitRender__unit-foot-d___1PhgD","unit-foot-hp":"UnitRender__unit-foot-hp___1W88e","unit-foot-atk":"UnitRender__unit-foot-atk___3zVzz","card-unit":"UnitRender__card-unit___222nM","anim-atk-R":"UnitRender__anim-atk-R___1uL8d","atk-r":"UnitRender__atk-r___2aNjJ","anim-atk-L":"UnitRender__anim-atk-L___1Yscx","atk-l":"UnitRender__atk-l___3NDJb","anim-atk-U":"UnitRender__anim-atk-U___3epKg","atk-u":"UnitRender__atk-u___2ZMWE","anim-atk-D":"UnitRender__anim-atk-D___3t1Tc","atk-d":"UnitRender__atk-d___1xI6S","anim-atk-UR":"UnitRender__anim-atk-UR___2Zrll","atk-u-r":"UnitRender__atk-u-r___2P7f-","anim-atk-UL":"UnitRender__anim-atk-UL___syyN0","atk-u-l":"UnitRender__atk-u-l___HlGFR","anim-atk-DR":"UnitRender__anim-atk-DR___2l5Jq","atk-d-r":"UnitRender__atk-d-r___1_PsN","anim-atk-DL":"UnitRender__anim-atk-DL___2AgN8","atk-d-l":"UnitRender__atk-d-l___2Ucwf","unit-ram":"UnitRender__unit-ram___2_pBX","unit-knight":"UnitRender__unit-knight___2zkO1","unit-swordsman":"UnitRender__unit-swordsman___2D_v_","unit-assasin":"UnitRender__unit-assasin___1ikkr","unit-dog":"UnitRender__unit-dog___2f4G3","unit-dualist":"UnitRender__unit-dualist___2uLca"};
-
-/***/ },
-/* 91 */
-/***/ function(module, exports) {
-
-	// removed by extract-text-webpack-plugin
-	module.exports = {"hidden":"style__hidden___folzu","app":"style__app___iKaHF","card":"style__card___1Oqck","unit":"style__unit___CrvjQ","turn":"style__turn___FtYen","deck":"style__deck___3wu64","end-game":"style__end-game___-TTIH","myCard1":"style__myCard1___EWvHn","myCard2":"style__myCard2___Ej01i","myCard3":"style__myCard3___3vkRg","myCard4":"style__myCard4___1o-kQ","myCard5":"style__myCard5___1y9-G","hand-active":"style__hand-active___3oIJF","log-bar-head":"style__log-bar-head___9QgEv","shows-from-r-to-l":"style__shows-from-r-to-l___3eK5-"};
-
-/***/ },
-/* 92 */,
-/* 93 */,
-/* 94 */,
-/* 95 */,
-/* 96 */,
-/* 97 */,
-/* 98 */,
-/* 99 */,
-/* 100 */,
-/* 101 */,
-/* 102 */,
-/* 103 */,
-/* 104 */,
-/* 105 */,
 /* 106 */
 /***/ function(module, exports) {
 
@@ -7692,10 +7709,10 @@ webpackJsonp([1],[
 	
 	var eio = __webpack_require__(175);
 	var Socket = __webpack_require__(149);
-	var Emitter = __webpack_require__(86);
-	var parser = __webpack_require__(82);
+	var Emitter = __webpack_require__(85);
+	var parser = __webpack_require__(81);
 	var on = __webpack_require__(148);
-	var bind = __webpack_require__(85);
+	var bind = __webpack_require__(84);
 	var debug = __webpack_require__(36)('socket.io-client:manager');
 	var indexOf = __webpack_require__(106);
 	var Backoff = __webpack_require__(170);
@@ -8283,13 +8300,13 @@ webpackJsonp([1],[
 	 * Module dependencies.
 	 */
 	
-	var parser = __webpack_require__(82);
-	var Emitter = __webpack_require__(86);
-	var toArray = __webpack_require__(319);
+	var parser = __webpack_require__(81);
+	var Emitter = __webpack_require__(85);
+	var toArray = __webpack_require__(320);
 	var on = __webpack_require__(148);
-	var bind = __webpack_require__(85);
+	var bind = __webpack_require__(84);
 	var debug = __webpack_require__(36)('socket.io-client:socket');
-	var hasBin = __webpack_require__(207);
+	var hasBin = __webpack_require__(208);
 	
 	/**
 	 * Module exports.
@@ -8724,7 +8741,7 @@ webpackJsonp([1],[
 	// Unique ID creation requires a high quality random # generator.  We feature
 	// detect to determine the best RNG source, normalizing to a function that
 	// returns 128-bits of randomness, since that's what's usually required
-	var _rng = __webpack_require__(321);
+	var _rng = __webpack_require__(322);
 	
 	// Maps for number <-> hex string conversion
 	var _byteToHex = [];
@@ -9130,13 +9147,17 @@ webpackJsonp([1],[
 	      return setYourPlayerNumber(state);
 	    case 'SET_YOUR_NAME':
 	      return setYourName(state, action.name);
+	    case 'CREATE_VS_BOT':
+	      return createRoomBot(state);
+	    case 'CLEAR_MSG':
+	      return clearMsg(state);
 	  }
 	  return state;
 	};
 	
-	var _immutable = __webpack_require__(58);
+	var _immutable = __webpack_require__(105);
 	
-	var _main = __webpack_require__(83);
+	var _main = __webpack_require__(82);
 	
 	var _uuid = __webpack_require__(151);
 	
@@ -9157,6 +9178,13 @@ webpackJsonp([1],[
 	  return state.set('joined', true);
 	}
 	
+	function createRoomBot(state) {
+	  var roomId = state.get('yourName') + '(' + _uuid2.default.v4() + ')';
+	  state = setRoomId(state, roomId);
+	  (0, _main.sendCreateBot)(roomId, state.get('clientId'), state.get('yourName'));
+	  return state.set('joined', true);
+	}
+	
 	function setConnectionState(state, connectionState, connected) {
 	  return state.set('connection', (0, _immutable.Map)({
 	    state: connectionState,
@@ -9166,17 +9194,23 @@ webpackJsonp([1],[
 	
 	function setPlayerData(state) {
 	  var playerSign = state.get('playerSign') || '';
-	  if (playerSign === 'P1') {
-	    return state.set('hand', state.get('players').get(0).get('hand')).set('selectedCard', state.get('players').get(0).get('selectedCard')).set('hp', state.get('players').get(0).get('hp')).set('deckLenght', state.get('players').get(0).get('deck') ? state.get('players').get(0).get('deck').count() : 0).set('enemyDeckLenght', state.get('players').get(1).get('deck') ? state.get('players').get(1).get('deck').count() : 0).set('enemyHp', state.get('players').get(1).get('hp')).set('enemyHand', state.get('players').get(1).get('hand'));
-	  } else if (playerSign === 'P2') {
-	    return state.set('hand', state.get('players').get(1).get('hand')).set('selectedCard', state.get('players').get(1).get('selectedCard')).set('hp', state.get('players').get(1).get('hp')).set('deckLenght', state.get('players').get(1).get('deck') ? state.get('players').get(1).get('deck').count() : 0).set('enemyDeckLenght', state.get('players').get(0).get('deck') ? state.get('players').get(0).get('deck').count() : 0).set('enemyHp', state.get('players').get(0).get('hp')).set('enemyHand', state.get('players').get(0).get('hand'));
+	  var p1n = undefined;
+	  var p2n = undefined;
+	  if (playerSign) {
+	    if (playerSign === 'P1') {
+	      p1n = 0;
+	      p2n = 1;
+	    } else if (playerSign === 'P2') {
+	      p1n = 1;
+	      p2n = 0;
+	    }
+	    return state.set('hand', state.getIn(['players', p1n, 'hand'])).set('selectedCard', state.getIn(['players', p1n, 'selectedCard'])).set('hp', state.getIn(['players', p1n, 'hp'])).set('deckLenght', state.getIn(['players', p1n, 'deck']) ? state.getIn(['players', p1n, 'deck']).count() : 0).set('enemyDeckLenght', state.getIn(['players', p2n, 'deck']) ? state.getIn(['players', p2n, 'deck']).count() : 0).set('enemyHp', state.getIn(['players', p2n, 'hp'])).set('enemyHand', state.getIn(['players', p2n, 'hand']));
 	  } else {
 	    return state;
 	  }
 	}
 	
 	function setState(state, newState, rooms) {
-	  console.log('rooms in state set' + rooms);
 	  if (newState) {
 	    console.log('new state have:');
 	    console.log(newState);
@@ -9187,11 +9221,9 @@ webpackJsonp([1],[
 	    if (newState.ready) {
 	      result = whoTurn(result);
 	    }
-	    console.log('playerNumber ' + result.get('playerNumber'));
 	    if (!result.get('playerNumber') || result.get('playerNumber') === -1) {
 	      result = setYourPlayerNumber(result);
 	    }
-	    console.log('playerNumber 2' + result.get('playerNumber'));
 	    result = setPlayerData(result);
 	    return result.set('allReady', newState.ready).set('rooms', rooms);
 	  } else {
@@ -9199,12 +9231,15 @@ webpackJsonp([1],[
 	  }
 	}
 	
+	function clearMsg(state, field) {
+	  return state.set('msg', '');
+	}
+	
 	function setField(state, field) {
 	  return state.set('field', (0, _immutable.List)(field));
 	}
 	
 	function setRoomId(state, roomId) {
-	  console.log(roomId);
 	  return state.set('roomId', roomId);
 	}
 	
@@ -9227,9 +9262,13 @@ webpackJsonp([1],[
 	function whoTurn(state) {
 	  if (state.get('curPlayer')) {
 	    if (state.get('curPlayer') === state.get('playerSign')) {
-	      return state.set('whoTurn', 'you');
+	      if (state.get('whoTurn') === 'you') {
+	        return state.set('whoTurn', 'you').set('msg', '');
+	      } else {
+	        return state.set('whoTurn', 'you').set('msg', 'Your Turn!');
+	      }
 	    } else {
-	      return state.set('whoTurn', 'enemy');
+	      return state.set('whoTurn', 'enemy').set('msg', '');;
 	    }
 	  } else {
 	    return state.set('whoTurn', 'not_ready');
@@ -9241,38 +9280,24 @@ webpackJsonp([1],[
 	  var findResult = state.get('players').find(function (p) {
 	    return p.get('id') === id;
 	  });
-	  var name = '';
 	  if (findResult && findResult.get('name')) {
-	    name = findResult.get('name');
-	    return state.set('playerSign', name);
+	    return state.set('playerSign', findResult.get('name'));
 	  } else {
 	    return state.set('playerSign', '');
 	  }
 	}
 	
 	function setYourPlayerNumber(state) {
-	  console.log(state.getIn(['players', 0, 'id']));
-	  console.log(state.get('clientId'));
 	  if (state.getIn(['players', 0, 'id']) === state.get('clientId')) {
-	    console.log('p1');
 	    return state.set('playerNumber', 0);
 	  } else if (state.getIn(['players', 1, 'id']) === state.get('clientId')) {
 	    return state.set('playerNumber', 1);
 	  } else {
 	    return state.set('playerNumber', -1);
 	  }
-	  /*  if (state.get('playerSign') && state.get('playerSign') === 'P1') {
-	      return state.set('playerNumber', 0);
-	    } else if (state.get('playerSign') && state.get('playerSign') === 'P2') {
-	      return state.set('playerNumber', 1);
-	    } else {
-	      return state.set('playerNumber', -1);
-	    }
-	    */
 	}
 	
 	function setYourName(state, name) {
-	  console.log('name:' + name);
 	  return state.set('yourName', name);
 	}
 
@@ -9286,7 +9311,7 @@ webpackJsonp([1],[
 	  value: true
 	});
 	
-	var _objectAssign = __webpack_require__(219);
+	var _objectAssign = __webpack_require__(220);
 	
 	var _objectAssign2 = _interopRequireDefault(_objectAssign);
 	
@@ -9324,15 +9349,20 @@ webpackJsonp([1],[
 	
 	var _ConnectionState = __webpack_require__(160);
 	
-	var _style = __webpack_require__(91);
+	var _style = __webpack_require__(90);
 	
 	var _style2 = _interopRequireDefault(_style);
+	
+	var _reactAddonsPureRenderMixin = __webpack_require__(13);
+	
+	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	exports.default = _react2.default.createClass({
 	  displayName: 'App',
 	
+	  mixins: [_reactAddonsPureRenderMixin2.default],
 	  render: function render() {
 	    return _react2.default.createElement(
 	      'div',
@@ -9358,13 +9388,13 @@ webpackJsonp([1],[
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _reactAddonsPureRenderMixin = __webpack_require__(16);
+	var _reactAddonsPureRenderMixin = __webpack_require__(13);
 	
 	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
 	
 	var _reactRedux = __webpack_require__(30);
 	
-	var _immutable = __webpack_require__(58);
+	var _immutable = __webpack_require__(105);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -9406,7 +9436,7 @@ webpackJsonp([1],[
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _reactAddonsPureRenderMixin = __webpack_require__(16);
+	var _reactAddonsPureRenderMixin = __webpack_require__(13);
 	
 	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
 	
@@ -9426,7 +9456,7 @@ webpackJsonp([1],[
 	
 	  mixins: [_reactAddonsPureRenderMixin2.default],
 	  propTypes: {
-	    enemyHand: _react.PropTypes.array.isRequired
+	    enemyHand: _react.PropTypes.object.isRequired
 	  },
 	  render: function render() {
 	    var cardNodes = this.props.enemyHand.toJS().map(function (card, i) {
@@ -9458,7 +9488,7 @@ webpackJsonp([1],[
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _reactAddonsPureRenderMixin = __webpack_require__(16);
+	var _reactAddonsPureRenderMixin = __webpack_require__(13);
 	
 	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
 	
@@ -9467,6 +9497,7 @@ webpackJsonp([1],[
 	var EnemyInfo = _react2.default.createClass({
 	  displayName: 'EnemyInfo',
 	
+	  mixins: [_reactAddonsPureRenderMixin2.default],
 	  render: function render() {
 	    return _react2.default.createElement(
 	      'div',
@@ -9499,22 +9530,28 @@ webpackJsonp([1],[
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _UnitRender = __webpack_require__(84);
+	var _UnitRender = __webpack_require__(83);
 	
 	var _UnitRender2 = _interopRequireDefault(_UnitRender);
+	
+	var _reactAddonsPureRenderMixin = __webpack_require__(13);
+	
+	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var GameFieldRow = _react2.default.createClass({
 	  displayName: 'GameFieldRow',
 	
+	  mixins: [_reactAddonsPureRenderMixin2.default],
 	  propTypes: {
-	    data: _react.PropTypes.array.isRequired
+	    row: _react.PropTypes.array.isRequired,
+	    cellClick: _react.PropTypes.func.isRequired
 	  },
 	  render: function render() {
 	    var cellClick = this.props.cellClick;
-	    var cellNodes = this.props.data.map(function (cell, i) {
-	      return _react2.default.createElement(GameFieldCell, { key: i, data: cell, cellClick: cellClick });
+	    var cellNodes = this.props.row.map(function (cell, i) {
+	      return _react2.default.createElement(GameFieldCell, { key: i, cell: cell, cellClick: cellClick });
 	    });
 	    return _react2.default.createElement(
 	      'div',
@@ -9527,54 +9564,77 @@ webpackJsonp([1],[
 	var GameFieldCell = _react2.default.createClass({
 	  displayName: 'GameFieldCell',
 	
+	  mixins: [_reactAddonsPureRenderMixin2.default],
 	  propTypes: {
-	    data: _react.PropTypes.object.isRequired
+	    cell: _react.PropTypes.object.isRequired
+	  },
+	  getAtkPlayerStyle: function getAtkPlayerStyle() {
+	    if (this.props.cell.atakPlayer) {
+	      return { backgroundColor: 'red' };
+	    } else {
+	      return { backgroundColor: 'transparent' };
+	    }
 	  },
 	  getArrowCss: function getArrowCss() {
-	    if (this.props.data.unit) {
-	      var name = this.props.data.owner === 0 ? 'atk-arrow-green' : 'atk-arrow-blue';
-	      var ready = this.props.data.unit.ready === true ? '-active' : '';
+	    if (this.props.cell.unit) {
+	      var name = this.props.cell.owner === 0 ? 'atk-arrow-green' : 'atk-arrow-blue';
+	      var ready = this.props.cell.unit.ready === true ? '-active' : '';
 	      return name + ready;
 	    } else {
 	      return '';
 	    }
 	  },
+	  getCellCss: function getCellCss() {
+	    var css = _GameField2.default['cell'];
+	    if (this.props.cell.unit) {
+	      if (this.props.cell.owner === 0) {
+	        css += ' ' + _GameField2.default['cell-cross'];
+	      } else {
+	        css += ' ' + _GameField2.default['cell-zero'];
+	      }
+	    }
+	    return css;
+	  },
 	  handleClick: function handleClick() {
-	    this.props.cellClick(this.props.data.id);
+	    this.props.cellClick(this.props.cell.id);
 	  },
 	  render: function render() {
-	    var playerSign = this.props.playerSign || '';
-	    var unit = this.props.data.unit || { info: '', hp: '', atk: '', direction: [] };
-	    var died = this.props.data.died;
-	    var arrowCss = this.getArrowCss();
-	    var dmgGet = this.props.data.dmgGet || '';
-	    var atkDirect = this.props.data.atkDirect || '';
-	    return _react2.default.createElement(
-	      'div',
-	      { className: _GameField2.default['cell'], onClick: this.handleClick },
-	      _react2.default.createElement(_UnitRender2.default, { data: unit, died: died,
-	        arrowCss: arrowCss, atkDirect: atkDirect,
-	        inCard: false
-	      }),
-	      _react2.default.createElement(
+	    var unit = this.props.cell.unit || false;
+	    if (unit) {
+	      return _react2.default.createElement(
 	        'div',
-	        { className: _GameField2.default['unit-info'] },
-	        unit.info
-	      )
-	    );
+	        { style: this.getAtkPlayerStyle(),
+	          className: this.getCellCss(),
+	          onClick: this.handleClick },
+	        _react2.default.createElement(_UnitRender2.default, { data: unit, died: this.props.cell.died,
+	          arrowCss: this.getArrowCss(), atkDirect: this.props.cell.atkDirect,
+	          inCard: false
+	        }),
+	        _react2.default.createElement(
+	          'div',
+	          { className: _GameField2.default['unit-info'] },
+	          unit.info
+	        )
+	      );
+	    } else {
+	      return _react2.default.createElement('div', { className: _GameField2.default['cell'],
+	        onClick: this.handleClick });
+	    }
 	  }
 	});
 	
 	var GameField = _react2.default.createClass({
 	  displayName: 'GameField',
 	
+	  mixins: [_reactAddonsPureRenderMixin2.default],
 	  propTypes: {
-	    gameField: _react.PropTypes.array.isRequired
+	    gameField: _react.PropTypes.array.isRequired,
+	    cellClick: _react.PropTypes.func.isRequired
 	  },
 	  render: function render() {
 	    var cellClick = this.props.cellClick;
 	    var rowNodes = [this.props.gameField.toJS().slice(0, 3), this.props.gameField.toJS().slice(3, 6), this.props.gameField.toJS().slice(6, 9)].map(function (row, i) {
-	      return _react2.default.createElement(GameFieldRow, { key: i, data: row, cellClick: cellClick });
+	      return _react2.default.createElement(GameFieldRow, { key: i, row: row, cellClick: cellClick });
 	    });
 	    return _react2.default.createElement(
 	      'div',
@@ -9595,13 +9655,13 @@ webpackJsonp([1],[
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.GameContainer = exports.GameView = undefined;
+	exports.GameContainer = exports.GameView = exports.ShowMesseges = undefined;
 	
 	var _react = __webpack_require__(2);
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _reactAddonsPureRenderMixin = __webpack_require__(16);
+	var _reactAddonsPureRenderMixin = __webpack_require__(13);
 	
 	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
 	
@@ -9635,6 +9695,32 @@ webpackJsonp([1],[
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	var ShowMesseges = exports.ShowMesseges = _react2.default.createClass({
+	  displayName: 'ShowMesseges',
+	
+	  mixins: [_reactAddonsPureRenderMixin2.default],
+	  render: function render() {
+	    var clear = this.props.clearMsg;
+	    setTimeout(function () {
+	      clear();
+	    }, 3000);
+	    if (this.props.msg && this.props.msg !== '') {
+	      return _react2.default.createElement(
+	        'div',
+	        { className: _Gams2.default['global-info'],
+	          onClick: clear },
+	        _react2.default.createElement(
+	          'h1',
+	          null,
+	          this.props.msg
+	        )
+	      );
+	    } else {
+	      return _react2.default.createElement('div', { className: _Gams2.default['global-info--hidden'] });
+	    }
+	  }
+	});
+	
 	var GameView = exports.GameView = _react2.default.createClass({
 	  displayName: 'GameView',
 	
@@ -9657,9 +9743,12 @@ webpackJsonp([1],[
 	        _react2.default.createElement(
 	          'div',
 	          { className: _Gams2.default['game-container-main'] },
+	          _react2.default.createElement(ShowMesseges, { msg: this.props.msg,
+	            clearMsg: this.props.clearMsg }),
 	          _react2.default.createElement(_EnemyHand2.default, { enemyHand: this.props.enemyHand }),
 	          _react2.default.createElement(_GameField2.default, { gameField: this.props.gameField,
-	            cellClick: this.props.cellClick }),
+	            cellClick: this.props.cellClick
+	          }),
 	          _react2.default.createElement(_PlayerHand2.default, { playerHand: this.props.playerHand,
 	            cardSelect: this.props.cardSelect,
 	            selectedCard: this.props.selectedCard,
@@ -9692,7 +9781,8 @@ webpackJsonp([1],[
 	    winner: state.get('winner') || false,
 	    enemyDeckLen: state.get('enemyDeckLenght') || '',
 	    yourDeckLen: state.get('deckLenght') || '',
-	    enemyHP: state.get('enemyHp') || ''
+	    enemyHP: state.get('enemyHp') || '',
+	    msg: state.get('msg') || ''
 	  };
 	}
 	
@@ -9803,7 +9893,7 @@ webpackJsonp([1],[
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _reactAddonsPureRenderMixin = __webpack_require__(16);
+	var _reactAddonsPureRenderMixin = __webpack_require__(13);
 	
 	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
 	
@@ -9812,6 +9902,7 @@ webpackJsonp([1],[
 	var LogBar = _react2.default.createClass({
 	  displayName: 'LogBar',
 	
+	  mixins: [_reactAddonsPureRenderMixin2.default],
 	  render: function render() {
 	    return _react2.default.createElement('div', { className: _LogBar2.default['log-bar-main'] });
 	  }
@@ -9829,7 +9920,7 @@ webpackJsonp([1],[
 	
 	var _PlayerHand2 = _interopRequireDefault(_PlayerHand);
 	
-	var _UnitRender = __webpack_require__(90);
+	var _UnitRender = __webpack_require__(89);
 	
 	var _UnitRender2 = _interopRequireDefault(_UnitRender);
 	
@@ -9837,7 +9928,7 @@ webpackJsonp([1],[
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _UnitRender3 = __webpack_require__(84);
+	var _UnitRender3 = __webpack_require__(83);
 	
 	var _UnitRender4 = _interopRequireDefault(_UnitRender3);
 	
@@ -9936,7 +10027,7 @@ webpackJsonp([1],[
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _reactAddonsPureRenderMixin = __webpack_require__(16);
+	var _reactAddonsPureRenderMixin = __webpack_require__(13);
 	
 	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
 	
@@ -9983,7 +10074,7 @@ webpackJsonp([1],[
 	
 	var _react2 = _interopRequireDefault(_react);
 	
-	var _reactAddonsPureRenderMixin = __webpack_require__(16);
+	var _reactAddonsPureRenderMixin = __webpack_require__(13);
 	
 	var _reactAddonsPureRenderMixin2 = _interopRequireDefault(_reactAddonsPureRenderMixin);
 	
@@ -9994,6 +10085,10 @@ webpackJsonp([1],[
 	var actionCreators = _interopRequireWildcard(_action_creators);
 	
 	var _reactRouter = __webpack_require__(42);
+	
+	var _Start = __webpack_require__(192);
+	
+	var _Start2 = _interopRequireDefault(_Start);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
@@ -10008,7 +10103,7 @@ webpackJsonp([1],[
 	  render: function render() {
 	    return _react2.default.createElement(
 	      'div',
-	      { className: 'room-item' },
+	      { className: _Start2.default['room-item'] },
 	      this.props.roomId,
 	      _react2.default.createElement(
 	        'button',
@@ -10051,17 +10146,19 @@ webpackJsonp([1],[
 	      );
 	    });
 	    var roomList = this.props.rooms.map(function (room, i) {
-	      return _react2.default.createElement(RoomItem, { roomId: room, join: join, key: i });
+	      return _react2.default.createElement(RoomItem, { className: _Start2.default['deck-item'],
+	        roomId: room,
+	        join: join,
+	        key: i });
 	    }) || [];
 	    if (!this.props.joined) {
 	      return _react2.default.createElement(
 	        'div',
-	        { className: 'start-container' },
+	        { className: _Start2.default['start-container'] },
 	        _react2.default.createElement(
 	          'h1',
 	          null,
-	          'Hello, your ID: ',
-	          this.props.clientId
+	          'Game name'
 	        ),
 	        _react2.default.createElement('input', {
 	          type: 'text',
@@ -10070,26 +10167,35 @@ webpackJsonp([1],[
 	          onClick: this.handleChange,
 	          onFocus: this.handleChange
 	        }),
-	        _react2.default.createElement('hr', null),
+	        _react2.default.createElement('br', null),
 	        roomList,
-	        _react2.default.createElement('hr', null),
+	        _react2.default.createElement('br', null),
 	        _react2.default.createElement(
 	          'button',
 	          { ref: 'Create',
 	            onClick: this.props.createRoom },
 	          'Create Game'
+	        ),
+	        _react2.default.createElement('br', null),
+	        _react2.default.createElement(
+	          'button',
+	          { ref: 'CreateBot',
+	            onClick: this.props.createRoomBot },
+	          'Create Game vs Bot'
 	        )
 	      );
 	    } else {
 	      return _react2.default.createElement(
 	        'div',
-	        null,
+	        { className: _Start2.default['wait-room'] },
+	        'Select deck:',
+	        _react2.default.createElement('br', null),
 	        _react2.default.createElement(
 	          'tr',
 	          null,
 	          deckList
 	        ),
-	        _react2.default.createElement('hr', null),
+	        _react2.default.createElement('br', null),
 	        _react2.default.createElement(
 	          _reactRouter.Link,
 	          { to: '/game', onClick: this.props.start },
@@ -10408,14 +10514,14 @@ webpackJsonp([1],[
 	 * Module dependencies.
 	 */
 	
-	var transports = __webpack_require__(88);
+	var transports = __webpack_require__(87);
 	var Emitter = __webpack_require__(54);
 	var debug = __webpack_require__(38)('engine.io-client:socket');
 	var index = __webpack_require__(106);
 	var parser = __webpack_require__(26);
 	var parseuri = __webpack_require__(109);
-	var parsejson = __webpack_require__(220);
-	var parseqs = __webpack_require__(59);
+	var parsejson = __webpack_require__(221);
+	var parseqs = __webpack_require__(58);
 	
 	/**
 	 * Module exports.
@@ -10540,7 +10646,7 @@ webpackJsonp([1],[
 	
 	Socket.Socket = Socket;
 	Socket.Transport = __webpack_require__(52);
-	Socket.transports = __webpack_require__(88);
+	Socket.transports = __webpack_require__(87);
 	Socket.parser = __webpack_require__(26);
 	
 	/**
@@ -11144,7 +11250,7 @@ webpackJsonp([1],[
 	 * Module requirements.
 	 */
 	
-	var Polling = __webpack_require__(89);
+	var Polling = __webpack_require__(88);
 	var inherit = __webpack_require__(37);
 	
 	/**
@@ -11389,7 +11495,7 @@ webpackJsonp([1],[
 	 */
 	
 	var XMLHttpRequest = __webpack_require__(53);
-	var Polling = __webpack_require__(89);
+	var Polling = __webpack_require__(88);
 	var Emitter = __webpack_require__(54);
 	var inherit = __webpack_require__(37);
 	var debug = __webpack_require__(38)('engine.io-client:polling-xhr');
@@ -11809,7 +11915,7 @@ webpackJsonp([1],[
 	
 	var Transport = __webpack_require__(52);
 	var parser = __webpack_require__(26);
-	var parseqs = __webpack_require__(59);
+	var parseqs = __webpack_require__(58);
 	var inherit = __webpack_require__(37);
 	var yeast = __webpack_require__(153);
 	var debug = __webpack_require__(38)('engine.io-client:websocket');
@@ -11821,7 +11927,7 @@ webpackJsonp([1],[
 	 * exposed by `ws` for Node environment.
 	 */
 	
-	var WebSocket = BrowserWebSocket || (typeof window !== 'undefined' ? null : __webpack_require__(323));
+	var WebSocket = BrowserWebSocket || (typeof window !== 'undefined' ? null : __webpack_require__(324));
 	
 	/**
 	 * Module exports.
@@ -12401,14 +12507,14 @@ webpackJsonp([1],[
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin
-	module.exports = {"cell":"GameField__cell___3L2bM","field":"GameField__field___1K6UX","row":"GameField__row___13fU6","unit-info":"GameField__unit-info___2r2O9"};
+	module.exports = {"cell":"GameField__cell___3L2bM","field":"GameField__field___1K6UX","row":"GameField__row___13fU6","unit-info":"GameField__unit-info___2r2O9","cell-cross":"GameField__cell-cross___18Fpn","cell-zero":"GameField__cell-zero___2FwdZ"};
 
 /***/ },
 /* 187 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin
-	module.exports = {"game-container":"Gams__game-container___IrFt5","game-container-main":"Gams__game-container-main___36V02"};
+	module.exports = {"game-container":"Gams__game-container___IrFt5","game-container-main":"Gams__game-container-main___36V02","global-info":"Gams__global-info___1-8ZD","global-info-show":"Gams__global-info-show___1p9af","global-info--hidden":"Gams__global-info--hidden___DIee8"};
 
 /***/ },
 /* 188 */
@@ -12439,7 +12545,13 @@ webpackJsonp([1],[
 	module.exports = {"deck":"PlayerInfo__deck___Z6w3_","player-info":"PlayerInfo__player-info___2Xjf4"};
 
 /***/ },
-/* 192 */,
+/* 192 */
+/***/ function(module, exports) {
+
+	// removed by extract-text-webpack-plugin
+	module.exports = {"start-container":"Start__start-container___1G3q1","wait-room":"Start__wait-room___2CpfD","room-item":"Start__room-item___3vApH","deck-item":"Start__deck-item___30vjw"};
+
+/***/ },
 /* 193 */,
 /* 194 */,
 /* 195 */,
@@ -12454,7 +12566,8 @@ webpackJsonp([1],[
 /* 204 */,
 /* 205 */,
 /* 206 */,
-/* 207 */
+/* 207 */,
+/* 208 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {
@@ -12520,7 +12633,7 @@ webpackJsonp([1],[
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 208 */
+/* 209 */
 /***/ function(module, exports) {
 
 	
@@ -12543,7 +12656,6 @@ webpackJsonp([1],[
 
 
 /***/ },
-/* 209 */,
 /* 210 */,
 /* 211 */,
 /* 212 */,
@@ -12553,7 +12665,8 @@ webpackJsonp([1],[
 /* 216 */,
 /* 217 */,
 /* 218 */,
-/* 219 */
+/* 219 */,
+/* 220 */
 /***/ function(module, exports) {
 
 	/* eslint-disable no-unused-vars */
@@ -12598,7 +12711,7 @@ webpackJsonp([1],[
 
 
 /***/ },
-/* 220 */
+/* 221 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -12636,8 +12749,8 @@ webpackJsonp([1],[
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 221 */,
-/* 222 */
+/* 222 */,
+/* 223 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -12646,7 +12759,6 @@ webpackJsonp([1],[
 
 
 /***/ },
-/* 223 */,
 /* 224 */,
 /* 225 */,
 /* 226 */,
@@ -12680,7 +12792,8 @@ webpackJsonp([1],[
 /* 254 */,
 /* 255 */,
 /* 256 */,
-/* 257 */
+/* 257 */,
+/* 258 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -12696,7 +12809,7 @@ webpackJsonp([1],[
 	
 	'use strict';
 	
-	var shallowCompare = __webpack_require__(301);
+	var shallowCompare = __webpack_require__(302);
 	
 	/**
 	 * If your React component's render function is "pure", e.g. it will render the
@@ -12731,7 +12844,6 @@ webpackJsonp([1],[
 	module.exports = ReactComponentWithPureRenderMixin;
 
 /***/ },
-/* 258 */,
 /* 259 */,
 /* 260 */,
 /* 261 */,
@@ -12774,7 +12886,8 @@ webpackJsonp([1],[
 /* 298 */,
 /* 299 */,
 /* 300 */,
-/* 301 */
+/* 301 */,
+/* 302 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -12803,7 +12916,6 @@ webpackJsonp([1],[
 	module.exports = shallowCompare;
 
 /***/ },
-/* 302 */,
 /* 303 */,
 /* 304 */,
 /* 305 */,
@@ -12813,7 +12925,8 @@ webpackJsonp([1],[
 /* 309 */,
 /* 310 */,
 /* 311 */,
-/* 312 */
+/* 312 */,
+/* 313 */
 /***/ function(module, exports, __webpack_require__) {
 
 	
@@ -12821,8 +12934,8 @@ webpackJsonp([1],[
 	 * Module dependencies.
 	 */
 	
-	var url = __webpack_require__(313);
-	var parser = __webpack_require__(82);
+	var url = __webpack_require__(314);
+	var parser = __webpack_require__(81);
 	var Manager = __webpack_require__(147);
 	var debug = __webpack_require__(36)('socket.io-client');
 	
@@ -12911,7 +13024,7 @@ webpackJsonp([1],[
 
 
 /***/ },
-/* 313 */
+/* 314 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {
@@ -12994,16 +13107,16 @@ webpackJsonp([1],[
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 314 */
-181,
 /* 315 */
+181,
+/* 316 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/*! JSON v3.3.2 | http://bestiejs.github.io/json3 | Copyright 2012-2014, Kit Cambridge | http://kit.mit-license.org */
 	;(function () {
 	  // Detect the `define` function exposed by asynchronous module loaders. The
 	  // strict `define` check is necessary for compatibility with `r.js`.
-	  var isLoader = "function" === "function" && __webpack_require__(322);
+	  var isLoader = "function" === "function" && __webpack_require__(323);
 	
 	  // A set of types used to distinguish objects from primitives.
 	  var objectTypes = {
@@ -13905,7 +14018,7 @@ webpackJsonp([1],[
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(152)(module), (function() { return this; }())))
 
 /***/ },
-/* 316 */
+/* 317 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/*global Blob,File*/
@@ -14053,10 +14166,10 @@ webpackJsonp([1],[
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 317 */
+/* 318 */
 54,
-/* 318 */,
-/* 319 */
+/* 319 */,
+/* 320 */
 /***/ function(module, exports) {
 
 	module.exports = toArray
@@ -14075,7 +14188,7 @@ webpackJsonp([1],[
 
 
 /***/ },
-/* 320 */
+/* 321 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/*! https://mths.be/utf8js v2.0.0 by @mathias */
@@ -14324,7 +14437,7 @@ webpackJsonp([1],[
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(152)(module), (function() { return this; }())))
 
 /***/ },
-/* 321 */
+/* 322 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {
@@ -14362,7 +14475,7 @@ webpackJsonp([1],[
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 322 */
+/* 323 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {module.exports = __webpack_amd_options__;
@@ -14370,13 +14483,13 @@ webpackJsonp([1],[
 	/* WEBPACK VAR INJECTION */}.call(exports, {}))
 
 /***/ },
-/* 323 */
+/* 324 */
 /***/ function(module, exports) {
 
 	/* (ignored) */
 
 /***/ },
-/* 324 */
+/* 325 */
 /***/ function(module, exports, __webpack_require__, __webpack_module_template_argument_0__) {
 
 	
@@ -14551,4 +14664,4 @@ webpackJsonp([1],[
 
 /***/ }
 ]);
-//# sourceMappingURL=app.8842f19476847f35e5f2.js.map
+//# sourceMappingURL=app.3a8ad044a5d5c7f236d1.js.map

@@ -1,0 +1,14 @@
+{ "id": "7",
+  "name": "exprt knight",
+  "hp": 5,
+  "atk": 2,
+  "atkCount": 1,
+  "direction":["U", "R", "L", "UL", "UR", "D"],
+  "info": "stay only on knight",
+  "ready":  false,
+  "require": "3",
+  "sprite": "knight-exprt", 
+  "onStart": [],
+  "onTurn": [],
+  "onDied": []
+}

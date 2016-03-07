@@ -1,0 +1,15 @@
+{ "id": "6",
+  "name": "priest",
+  "hp": 5,
+  "atk": 1,
+  "atkCount": 1,
+  "direction":["U"],
+  "ready":  false,
+  "sprite": "priest", 
+  "info": "test text",
+  "onStart": [],
+  "onTurn": [
+    {healOneFriend: {hp: 1}
+    ],
+  "onDied": []
+}
