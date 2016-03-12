@@ -1,6 +1,7 @@
 { "id": "6",
   "name": "priest",
   "hp": 5,
+  "maxHp": 5,
   "atk": 1,
   "atkCount": 1,
   "direction":["U"],

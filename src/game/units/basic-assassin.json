@@ -1,6 +1,7 @@
 { "id": "1",
   "name": "assassin",
   "hp": 2,
+  "maxHp": 2,
   "atk": 3,
   "atkCount": 1,
   "direction":["U", "D", "L", "R", "UL", "UR", "DR", "DL" ],

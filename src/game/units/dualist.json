@@ -1,6 +1,7 @@
 { "id": "2",
   "name": "dualist",
   "hp": 3,
+  "maxHp": 3,
   "atk": 4,
   "atkCount": 1,
   "direction":["L", "R", "U"],

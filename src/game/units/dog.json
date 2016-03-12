@@ -1,6 +1,7 @@
 { "id": "6",
   "name": "dog",
   "hp": 5,
+  "maxHp": 5,
   "atk": 2,
   "atkCount": 1,
   "direction":["U", "D", "L", "R", "UL", "UR", "DR", "DL"],

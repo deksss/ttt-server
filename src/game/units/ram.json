@@ -1,6 +1,7 @@
 { "id": "4",
   "name": "ram",
   "hp": 7,
+  "maxHp": 7,
   "atk": 2,
   "atkCount": 1,
   "direction":["U", "D"],
