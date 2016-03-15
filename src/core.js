@@ -10,7 +10,8 @@ export function createRoom(state, roomId, playerId, name) {
   const newRoom = Map({players: List([p1, p2]),
                        ready: false,
                        curPlayer: '',
-                       deckList: state.get('deckList')});
+                       deckList: state.get('deckList'),
+                       initField: state.get('initField')});
   return state.set(roomId, newRoom)
               .set('rooms', state.get('rooms').push(roomId));
 }

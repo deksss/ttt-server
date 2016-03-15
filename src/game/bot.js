@@ -3,6 +3,8 @@ import {selectCard} from  './deck';
 import {setCard, findFreeCellId} from  './field';
 import {shuffleArray} from '../utils';
 
+// to do: I move on room id and it is all this stuff dosnt work now
+// need to by fixed
 export function sendSelectCard (state, roomId, playerNumber) {
   const hand = state.getIn([roomId, 'players', playerNumber, 'hand']) || false;	
   console.log('hand ' + hand)

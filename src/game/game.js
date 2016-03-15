@@ -1,6 +1,6 @@
 import {List, Map} from 'immutable';
 import {getUnitById, initUnits} from './units';
-import {generateDeck, getCard} from './deck';
+import {generateDeck, getCard, getCardForPrevCurPlayer} from './deck';
 import {coin} from '../utils';
 import {genereateNewFied} from './field';
 import {turnCalc} from './turn';
@@ -25,63 +25,79 @@ export function initData(state) {
               .set('deckList', DECK_LIST);
 }
 
-export function chekWin (state, roomId) {
-  const roomStatePlayers = state.getIn([roomId, 'players']);
+export function chekWin (state) {
+  const roomStatePlayers = state.get('players');
   const p1HP = roomStatePlayers.getIn([ 0,  'hp']);
   const p2HP = roomStatePlayers.getIn([ 1,  'hp']);
   if (p1HP < 1 && p2HP > 0) {
-    return state.setIn([roomId, 'winner'], 'P2');
+    return state.set('winner', 'P2');
   } else if (p2HP < 1 && p1HP > 0) {
-    return state.setIn([roomId, 'winner'], 'P1');
+    return state.set('winner', 'P1');
   } else if (p1HP < 1 && p2HP < 1) {
-    return state.setIn([roomId, 'winner'], 'Draw!');
+    return state.set('winner', 'Draw!');
   } else {
     if (roomStatePlayers.getIn([ 1,  'id']) === 'bot1' &&
-        state.getIn([roomId, 'curPlayer']) === 'P2') {     
-      return botTurn(state, roomId, 1);
+        state.get('curPlayer') === 'P2') {     
+      return botTurn(state, 1);
     } else {
       return state;    
     }
   }
 };
 
-function dmgOnePlayer (state, roomId, player) {
+function dmgOnePlayer (state, player) {
   const targerPlayer = Number(!player);
-  const atak = state.get(roomId).get('players').get(player).get('atak');
+  const atak = state.getIn(['players', player, 'atak']);
   if (atak && atak.count() > 2) {
     var atakOnlyDmg = atak.map(atk => atk.getIn(['unit', 'atk']));
     const dmg = atakOnlyDmg.reduce( function (prev, currentValue) {
       return prev + currentValue;
     });
-    return state.setIn([roomId, 'players', targerPlayer, 'hp'],
-                       state.getIn([roomId, 'players', targerPlayer, 'hp']) - dmg)
-                .setIn([roomId, 'field'], state.get('initField'));
+    return state.setIn(['players', targerPlayer, 'hp'],
+                       state.getIn(['players', targerPlayer, 'hp']) - dmg)
+                .set('field', state.get('initField'));
   } else {
     return state;
   }
 }
 
-function dmgPlayers (state, roomId) {
-  return dmgOnePlayer(dmgOnePlayer(state, roomId, 1), roomId, 0);
+function dmgPlayers (roomState) {
+  return dmgOnePlayer(dmgOnePlayer(roomState, 1), 0);
 }
 
-export function nextTurn (state, roomId) {
-  const curPlayer = state.get(roomId).get('curPlayer') || '';
-  const p1 = state.get(roomId).get('players').get(0).get('name') || 'P1';
-  const p2 = state.get(roomId).get('players').get(1).get('name') || 'P2';
-  let newCurSign = p2, 
-      newCurNumber = 1, 
-      notCurNumber = 0;
 
-  if ((!curPlayer && coin()) || curPlayer === p2) {
-    newCurSign = p1; 
-    newCurNumber = 0;
-    notCurNumber = 1;
+  //if not have curent player drop coin and gen else reverse current player
+export function setCurPlayer(roomState) {
+  const curPlayer = roomState.get('curPlayer') || false;
+  let newCurNumber = 0;
+  let oldCurNumber = 1;
+  
+  if ((curPlayer && curPlayer === roomState.getIn(['players', 0, 'name'])) ||
+       coin()) {
+    newCurNumber = 1;
+    oldCurNumber = 0;   
   }
 
-  return chekWin(getCard(dmgPlayers(turnCalc(state.setIn([roomId, 'curPlayer'], newCurSign)
-                .setIn([roomId, 'players', newCurNumber, 'canSetCards'], true)
-                .setIn([roomId, 'players', notCurNumber, 'canSetCards'], false), roomId), roomId), roomId, notCurNumber), roomId);
+  return roomState.set('curPlayer', roomState.getIn(['players', newCurNumber, 'name']))
+                  .setIn(['players', newCurNumber, 'canSetCards'], true)
+                  .setIn(['players', oldCurNumber, 'canSetCards'], false)
+                  .set('oldCurPlayer', oldCurNumber); 
+}
+
+
+export function nextTurn (state, roomId) {
+  const newState = 
+  chekWin(
+    getCardForPrevCurPlayer( 
+      dmgPlayers(
+        turnCalc(
+          setCurPlayer(
+            state.get(roomId))
+          )
+        )
+      )
+    );
+  return state.set(roomId, newState);
 }
 
 export function restart(state) {

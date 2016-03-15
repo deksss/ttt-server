@@ -19,7 +19,7 @@ export function startServer(store) {
 
   app.use(Express.static(Path.join(__dirname, 'public')));
 
-  
+
   store.subscribe(
     () => {
       let previousRooms = currentRooms;
@@ -36,15 +36,6 @@ export function startServer(store) {
     socket.on('create', (roomId, playerId, name) => {
       let currentRoom;
       socket.join(roomId);
-      store.dispatch({type: 'CREATE_ROOM', roomId: roomId, playerId: playerId, name: name});
-
-      console.log('room create: by player ' + playerId);
-      console.log(store.getState().toJS());
-
-      socket.to(roomId).emit('state', store.getState().get(roomId).toJS());
-      socket.to(roomId).emit('your room id', roomId);
-      socket.on('action', store.dispatch.bind(store));
-      console.log('new room ID: ' + roomId);
       store.subscribe(
         () => {
           let previousRoom = currentRoom;
@@ -54,6 +45,13 @@ export function startServer(store) {
           }
         }
       );
+      store.dispatch({type: 'CREATE_ROOM', roomId: roomId, playerId: playerId, name: name});
+
+
+      socket.to(roomId).emit('state', store.getState().get(roomId).toJS());
+      socket.to(roomId).emit('your room id', roomId);
+      socket.on('action', store.dispatch.bind(store));
+      console.log('new room ID: ' + roomId);
     });
 
     socket.on('join', (roomId, playerId, name) => {

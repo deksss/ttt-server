@@ -254,15 +254,14 @@ function setCardsReady(state) {
   	               state.get( 'field').map(cell => updateCellReady(cell)));
 }
 
-export function turnCalc (state, roomId) {
-  if (state.getIn([roomId, 'field'])) {
-  	let roomState = state.get(roomId);
-	  return state.set(roomId, genFieldAnimation(
-		                       findPlayersAtkCell(
-			                   setCardsReady(
-			                   calcHp(
-				               setAtk(
-				               nextPrepeare(roomState)))))));
+export function turnCalc (state) {
+  if (state.get('field')) {
+	  return  genFieldAnimation(
+		      findPlayersAtkCell(
+			  setCardsReady(
+			  calcHp(
+			  setAtk(
+			  nextPrepeare(state))))));
 
   } else {
     return state;
