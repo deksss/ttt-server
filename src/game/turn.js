@@ -56,21 +56,25 @@ function normalizeDirects (cell, field) {
   return resultCell.filter(val => val);
 }
 
-function getTargetForAtk (field, cell) {
-  const directs = normalizeDirects(cell, field);
-	var targetCell = false;
-  const onlyLiveEnemy =  List(directs.filter(direct => {
+function getCellTargets (field, cell, directs) {
+  return List(directs.filter(direct => {
+  	let targetCell = false;
 		if (field.get(direct.get('index')) || field.get(direct.get('index')) === 0) {
 		  targetCell = field.get(direct.get('index'));
 		};
-	  if (targetCell !== false &&
-		  targetCell.get('owner') !== '' &&
-		  targetCell.get('owner') !== cell.get('owner')) {
+	  if (targetCell &&
+		    targetCell.get('owner') !== '' &&
+		    targetCell.get('owner') !== cell.get('owner')) {
 	    return true;
 	  }  else {
 	    return false;
 	  }
   }));
+}
+
+function getTargetForAtk (field, cell) {
+  const directs = normalizeDirects(cell, field);
+  const onlyLiveEnemy =  getCellTargets(field, cell, directs);
   if (onlyLiveEnemy && onlyLiveEnemy.count() > 0) {
 	  return shuffleArray(onlyLiveEnemy.toArray())[0];
 	} else {
