@@ -1,45 +1,59 @@
 import {Map, List} from 'immutable';
 import {shuffleArray} from '../utils';
 
+function clearDeath (cell) {
+ if (cell.get('died')) {
+  return cell.set('died', false)
+			 .set('free', true)
+			 .set('owner', '')
+		     .set('unit', false);
+  } else {
+    return cell;
+  }	
+}
+
 function nextPrepeare (state) {
-	return state.set('field', state.get('field').map(function (cell) {
-		                 if (cell.get('died')) {
-			               return cell.set('died', false)
-			                          .set('free', true)
-			                          .set('owner', '')
-					                  .set('unit', false);
-		                 } else {
-			               return cell;
-		                 }
-	             }))
+	return state.set('field', state.get('field').map(clearDeath))
 	            .set('ataksAction', List([]))
-							.set('fieldAnimation', List([]));
+				.set('fieldAnimation', List([]));
+}
+
+function strDirect2Cord (cell, direct) {
+  const DIRECTIOINS = 
+    {'UL': {x:-1, y: -1},
+	 'U': {x: 0, y: -1},
+	 'UR':{x: 1, y: -1},
+	 'L': {x: -1, y: 0},
+	 'R': {x: 1, y: 0},
+	 'DL':{x:-1, y: 1},
+	 'D': {x: 0, y: 1},
+	 'DR':{x: 1, y: 1}};	
+
+  return {x: Number(DIRECTIOINS[direct].x) + Number(cell.get('x')), 
+  	      y: Number(DIRECTIOINS[direct].y) + Number(cell.get('y'))
+  	    };
 }
 
 function normalizeDirects (cell, field) {
-  const DIRECTIOINS = {'UL': {x:-1, y: -1},
-	  'U': {x: 0, y: -1},
-	  'UR':{x: 1, y: -1},
-	  'L': {x: -1, y: 0},
-	  'R': {x: 1, y: 0},
-	  'DL':{x:-1, y: 1},
-	  'D': {x: 0, y: 1},
-	  'DR':{x: 1, y: 1}};
+	const resultCell = cell.getIn(['unit', 'direction']).map(direct => {
+    const cord = strDirect2Cord(cell, direct);
+    const correct = field.find(val => {
+	    if (val.get('y') == cord.y && val.get('x') == cord.x) {
+	      return true;
+	    } else  {
+	      return false;
+	    }
+	  });
 
-  return cell.getIn(['unit', 'direction']).map(direct => {
-		const x = Number(DIRECTIOINS[direct].x) + Number(cell.get('x'));
-		const y = Number(DIRECTIOINS[direct].y) + Number(cell.get('y'));
-		const correct = field.find(val => {
-			if (val.get('y') == y && val.get('x') == x) {
-				return true;
-			} else  {
-				return false;
-			}
-		  });
-		if (correct && (correct.get('index') === 0 || correct.get('index'))) {
-		  return Map({index: correct.get('index'), x: x, y: y, direct: direct});
-		}
-	}).filter(val => val);
+	  if (correct && (correct.get('index') === 0 || correct.get('index'))) {
+	   return Map({index: correct.get('index'), 
+	  	           x: cord.x, 
+	  	           y: cord.y, 
+	  	           direct: direct});
+	  }
+  });
+
+  return resultCell.filter(val => val);
 }
 
 function getTargetForAtk (field, cell) {
