@@ -66,19 +66,19 @@ function dmgPlayers (roomState) {
 }
 
 
-  //if not have curent player drop coin and gen else reverse current player
 export function setCurPlayer(roomState) {
   const curPlayer = roomState.get('curPlayer') || false;
-  let newCurNumber = 0;
-  let oldCurNumber = 1;
+  var newCurNumber = 0;
+  var oldCurNumber = 1;
   
   if ((curPlayer && curPlayer === roomState.getIn(['players', 0, 'name'])) ||
-       coin()) {
+      (!curPlayer && coin())) {
     newCurNumber = 1;
     oldCurNumber = 0;   
   }
 
-  return roomState.set('curPlayer', roomState.getIn(['players', newCurNumber, 'name']))
+  return roomState.set('curPlayer', 
+                       roomState.getIn(['players', newCurNumber, 'name']))
                   .setIn(['players', newCurNumber, 'canSetCards'], true)
                   .setIn(['players', oldCurNumber, 'canSetCards'], false)
                   .set('oldCurPlayer', oldCurNumber); 

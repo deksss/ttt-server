@@ -84,4 +84,28 @@ describe('getCurPlayer', () => {
     const newState =  setCurPlayer(state);
     expect(newState.get('curPlayer')).to.be.oneOf([p1name, p2name]);
   });
+
+  it('get roomState when P1 cur and return when new cur P2', () => {
+    const state = Map({
+          'curPlayer': 'P1', 
+          'players': List([
+                Map({'name': 'P1'}), 
+                Map({'name': 'P2'})])
+      });
+    
+    const newState =  setCurPlayer(state);
+    expect(newState.get('curPlayer')).to.equal('P2');
+  });
+
+  it('get roomState when P2 cur and return when new cur P1', () => {
+    const state = Map({
+          'curPlayer': 'P2', 
+          'players': List([
+                Map({'name': 'P1'}), 
+                Map({'name': 'P2'})])
+      });
+    
+    const newState =  setCurPlayer(state);
+    expect(newState.get('curPlayer')).to.equal('P1');
+  });
 });

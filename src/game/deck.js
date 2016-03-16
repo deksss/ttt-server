@@ -15,50 +15,16 @@ export function generateDeck (state, deckId) {
   return {'deck': List(deck), 'hand': state.get('initHand').merge(List(hand))};
 }
 
-export function selectDeck(state, roomId, playerNumber, deck) {
+export function selectDeck (state, roomId, playerNumber, deck) {
   return state.setIn([roomId, 'players', playerNumber, 'deckName'], deck);
 }
 
-function getOneCard (state, roomId, playerNumber, deck, hand, freeId) {
-  return state.setIn([roomId, 'players', playerNumber, 'hand'],
-                           hand.map( card => {
-                              if (card.get('id') === freeId) {
-                                return card.set('unit',  deck.last())
-                                           .set('new',  true);
-                              } else {
-                                return card.set('new', false);
-                              }
-                            }))
-              .setIn([roomId, 'players', playerNumber, 'deck'], deck.pop());    
+export function getCardInRoom (state, roomId, playerNumber, count = 1) {
+  const roomState = state.get(roomId);
+  return state.set(roomId, getCard(roomState, playerNumber, count));
 }
 
-
-export function getCard (state, roomId, playerNumber, count = 1) {
-  if (state.getIn([roomId, 'players', playerNumber, 'deck'])) {
-    const deck = state.getIn([roomId, 'players', playerNumber, 'deck']);
-    const hand = state.getIn([roomId, 'players', playerNumber, 'hand']);
-    const freeCardSlot = hand.find(card => card.get('unit') === null);
-    var freeId;
-
-    if (!deck.isEmpty() && freeCardSlot) {
-      freeId = freeCardSlot.get('id');
-      if (count <= 1) {
-         return getOneCard(state, roomId, playerNumber, deck, hand, freeId);
-      } else {
-        return getCard(
-          getOneCard(
-            state, roomId, playerNumber, deck, hand, freeId), 
-          roomId, playerNumber, count - 1);
-      }
-    }	else {
-  	  return state;
-    }
-  } else {
-    return state;
-  }
-}
-
-function getOneCardP (state, playerNumber, deck, hand, freeId) {
+function getOneCard (state, playerNumber, deck, hand, freeId) {
   return state.setIn(['players', playerNumber, 'hand'],
                            hand.map( card => {
                               if (card.get('id') === freeId) {
@@ -71,7 +37,7 @@ function getOneCardP (state, playerNumber, deck, hand, freeId) {
               .setIn(['players', playerNumber, 'deck'], deck.pop());    
 }
 
-export function getCardP (state, playerNumber, count = 1) {
+export function getCard (state, playerNumber, count = 1) {
   if (state.getIn(['players', playerNumber, 'deck'])) {
     const deck = state.getIn(['players', playerNumber, 'deck']);
     const hand = state.getIn(['players', playerNumber, 'hand']);
@@ -81,11 +47,10 @@ export function getCardP (state, playerNumber, count = 1) {
     if (!deck.isEmpty() && freeCardSlot) {
       freeId = freeCardSlot.get('id');
       if (count <= 1) {
-         return getOneCardP(state, playerNumber, deck, hand, freeId);
+         return getOneCard(state, playerNumber, deck, hand, freeId);
       } else {
         return getCard(
-          getOneCard(
-            state,  playerNumber, deck, hand, freeId), 
+          getOneCard(state,  playerNumber, deck, hand, freeId), 
            playerNumber, count - 1);
       }
     } else {
@@ -96,11 +61,9 @@ export function getCardP (state, playerNumber, count = 1) {
   }
 }
 
-
-//need fix
 export function getCardForPrevCurPlayer (roomState) {
   const playerNumber = roomState.get('oldCurPlayer');
-  return getCardP(roomState, playerNumber, 1);
+  return getCard(roomState, playerNumber, 1);
 }
 
 
