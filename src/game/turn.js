@@ -82,16 +82,23 @@ function getTargetForAtk (field, cell) {
   }
 }
 
-function setAtk (state) {
-  const field = state.get('field');
-  const ataksAction = field.map(function (cell) {
-    if (cell.get('unit') &&
+function isCellCanAtak (cell) {
+ if (cell.get('unit') &&
 		cell.getIn(['unit', 'atk']) &&
 		cell.getIn(['unit', 'ready'])  &&
 		cell.getIn(['unit', 'direction']) &&
 		cell.get('owner') !== '') {
-		  const target = getTargetForAtk(field, cell);
+ 	return true;
+ } else {
+ 	return false;
+ }
+}
 
+function setAtk (state) {
+  const field = state.get('field');
+  const cellAtakers = field.filter(isCellCanAtak);
+  const ataksAction = cellAtakers.map(function (cell) {
+		  const target = getTargetForAtk(field, cell);
 			if (target === 0 || target) {
 		    return Map({targetIndex: target.get('index'),
 					         atakerIndex: cell.get('index'),
@@ -100,9 +107,6 @@ function setAtk (state) {
 		  } else {
 		    return false;
 		  }
-		} else {
-		  return false;
-		}
 	});
 	return state.set('ataksAction',
 		               List(ataksAction).filter(val => val !== false));
