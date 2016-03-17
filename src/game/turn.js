@@ -130,58 +130,52 @@ function chekNeighbor(onlyPlyerCell, cell, cordName) {
 	}
 }
 
-function chekDiag(onlyPlyerCell) {
-	const diag1 = onlyPlyerCell.filter(cell => {
-		if(cell.get('index') === 0 || cell.get('index') === 4 || cell.get('index') === 8){
-			return true;
-		  } else {
-			return false;
-		}
+function chekDiag (onlyPlyerCell, diag) {
+  return onlyPlyerCell.filter(cell => {
+	  if (cell.get('index') === diag[0] ||
+	  	  cell.get('index') === diag[1] ||
+	  	  cell.get('index') === diag[2] ) {
+	    return true;
+	  } else {
+		  return false;
+	  }
 	});
-	const diag2 = onlyPlyerCell.filter(cell => {
-		if(cell.get('index') === 2 || cell.get('index') === 4 || cell.get('index') === 6){
-			return true;
-		  } else {
-			return false;
-		}
-	});
-	if (diag1.count() === 3) {
-		return diag1;
-	} else if  (diag2.count() === 3 ) {
-	  return diag2;
-	} else {
-	  return false;
-	}
 }
 
-
-function findAtakers(field, playerNumber) {
+function findCellsAtksPlayer(field, playerNumber) {
+	const DIAG1 = [0, 4, 8];
+	const DIAG2 = [2, 4, 6];
   const onlyPlyerCell = field.filter(cell => cell.get('owner') === playerNumber);
   const rowResult = field.filter(cell => chekRow(onlyPlyerCell, cell));
   const colResult = field.filter(cell => chekCol(onlyPlyerCell, cell));
-  const diagResult = chekDiag(onlyPlyerCell);
+  const diag1Result = chekDiag(onlyPlyerCell, DIAG1);
+  const diag2Result = chekDiag(onlyPlyerCell, DIAG2);
 	if (rowResult.count() > 2) {
 	  return rowResult;
 	} else if (colResult.count() > 2) {
-      return colResult;
-	} else if (diagResult) {
-      return diagResult;
+    return colResult;
+	} else if (diag1Result.count() > 2) {
+    return diag1Result;
+	} else if (diag2Result.count() > 2) {
+    return diag2Result;
 	} else {
 		return List([]);
 	}
 }
 
+
 function findPlayersAtkCell (state) {
 	const field = state.get('field');
-	return state.setIn([ "players", 0, 'atak'], findAtakers(field, 0))
-	            .setIn(["players", 1, 'atak'], findAtakers(field, 1));
+	return state.setIn([ "players", 0, 'atak'], findCellsAtksPlayer(field, 0))
+	            .setIn(["players", 1, 'atak'], findCellsAtksPlayer(field, 1));
 }
 
 function calcTargetDmg (cellAtk) {
-  const dmg =  cellAtk.reduce(function(prev, currentValue) {
+  const dmg = cellAtk.reduce(function(prev, currentValue) {
 		 return prev.set('dmg', prev.get('dmg' ) + currentValue.get('dmg'));
-	 });
-	 return dmg.get('dmg');
+	});
+
+	return dmg.get('dmg');
 }
 
 
@@ -219,8 +213,9 @@ function calcHp(state) {
 	const ataksAction = state.get('ataksAction');
 	const oldField = state.get('field');
 	const newField = oldField.map(function (cell) {
-      return callOneCellHp(oldField, ataksAction, cell);
+    return callOneCellHp(oldField, ataksAction, cell);
 	});
+
 	return state.set('prevField', state.getIn( 'field'))
 	            .set('field', List(newField));
 }
@@ -229,7 +224,8 @@ function genPlayerAtak(state, player)  {
   const atakFrame = state.getIn([ 'players', player, 'atak']) || false;
   if (atakFrame && atakFrame.count() > 2) { 
     return state.get('field').map(cell => {
-		               if (atakFrame.find(cellAtk => cellAtk.get('index') === cell.get('index'))) {
+		               if (atakFrame.find(cellAtk => 
+		                     cellAtk.get('index') === cell.get('index'))) {
 		                 return cell.set('atakPlayer', true);	
 		               } else {
 		               	return cell;
@@ -241,8 +237,8 @@ function genPlayerAtak(state, player)  {
 }
 
 function genFieldAnimation (state) {
-  let animatedField = state.get('ataksAction')
-	                         .map(function (atak) {
+  let animatedField = 
+    state.get('ataksAction').map(function (atak) {
       return  state.get('field')
                    .setIn([atak.get('targetIndex'), 'dmgGet'], atak.get('dmg'))
 			       .setIn([atak.get('atakerIndex'), 'atkDirect'], atak.get('direct') );
@@ -251,14 +247,14 @@ function genFieldAnimation (state) {
   const p2atak = genPlayerAtak(state, 1);
 
   if (p1atak) { 
-    return state.set( 'fieldAnimation', 
+    return state.set('fieldAnimation', 
 		             animatedField.push(p1atak));
-  } else if (p2atak) {
-  	  return state.set( 'fieldAnimation', 
-		             animatedField.push(p2atak));
+  } if (p2atak) {
+  	  return state.set('fieldAnimation', 
+		                   animatedField.push(p2atak));
   } else {
     return state.set('fieldAnimation', 
-		             animatedField);	
+		                 animatedField);	
   }
 }
 
