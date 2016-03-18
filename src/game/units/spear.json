@@ -1,0 +1,14 @@
+{ "id": "8",
+  "name": "spear",
+  "hp": 3,
+  "maxHp": 3,
+  "atk": 3,
+  "atkCount": 1,
+  "direction":["U", "D", "L", "R", "UL", "UR"],
+  "ready":  false,
+  "sprite": "spearmaster", 
+  "info": "test text",
+  "onStart": [],
+  "onTurn": [],
+  "onDied": []
+}

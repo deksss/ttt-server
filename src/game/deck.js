@@ -4,13 +4,14 @@ import {List, Map} from 'immutable';
 
 const MAXCARDINHAND = 5;
 
+//nned cash deks in ram
 export function generateDeck (state, deckId) {
   const START_CARD_COUNT = 3;
-  const deckUnitIds = require('./deck/' + deckId +'.json');
-  const deck = shuffleArray(deckUnitIds.map(unitId => getUnitById(state, unitId)));
+  const deckCardsIds = require('./deck/' + deckId +'.json').cards;
+  const deck = shuffleArray(deckCardsIds.map(unitId => getUnitById(state, unitId)));
   const hand = deck.splice(0, START_CARD_COUNT).map(function(unit, index) {
   	return Map({id: index, unit: unit, new: true});
-  }  );
+    }  );
 
   return {'deck': List(deck), 'hand': state.get('initHand').merge(List(hand))};
 }

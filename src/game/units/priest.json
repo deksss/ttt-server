@@ -10,7 +10,8 @@
   "info": "test text",
   "onStart": [],
   "onTurn": [
-    {healOneFriend: {hp: 1}
+    {"funcName": "healOneFriend",
+      "params": {"hp": 1}}
     ],
   "onDied": []
 }

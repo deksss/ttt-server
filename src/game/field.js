@@ -33,30 +33,31 @@ function setNew (state, roomId, playerNumber, cellId) {
 	}
 }
 
-function setUpgrade () {
-
-}
+export function canSetCardInCell (selectedCard, playerData, cell, playerNumber) {
+  if (selectedCard && playerData.get('canSetCards')) {
+  	const requiredId = selectedCard.getIn(['unit', 'require']) || false;
+    if ((cell.get('free') && selectedCard &&
+			  playerData.get('canSetCards') &&
+			  requiredId !== 0 && !requiredId) ||
+			 ((requiredId || requiredId === 0) &&
+	      cell.getIn(['unit', 'id']) === requiredId &&
+	      cell.get('owner') === playerNumber &&
+			  cell.getIn(['unit', 'ready']))) {
+      return true;
+    }
+  }  
+  return false;
+} 
 
 export function setCard(state, roomId, playerNumber, cellId) {
 	const playerData = state.get(roomId).get('players').get(playerNumber);
 	const selectedCard = playerData.get('selectedCard') || false;
-	const cell = state.get(roomId)
-	                  .get('field')
+	const cell = state.getIn([roomId, 'field'])
 	                  .find(value => value.get('id') === cellId) || false;
 	const cellIndex = cell.get('index');
-	const required = selectedCard.getIn(['unit', 'require']) || false;
-	if (cell.get('free') &&
-	    selectedCard &&
-			playerData.get('canSetCards') &&
-			required !== 0 &&
-			!required) {
+	if (canSetCardInCell(selectedCard, playerData, cell, playerNumber)) {
 	  return setCardInCell (state, roomId, playerNumber, cellIndex, selectedCard);
-	} else if ((required || required === 0) &&
-	           cell.getIn(['unit', 'id']) === required &&
-					   cell.getIn(['unit', 'ready'])) {
-		return setCardInCell (state, roomId, playerNumber, cellIndex, selectedCard);
-	}
-	else {
+	} else {
 		return state;
 	}
 }
