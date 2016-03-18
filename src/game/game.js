@@ -5,6 +5,7 @@ import {coin} from '../utils';
 import {genereateNewFied} from './field';
 import {turnCalc} from './turn';
 import {botTurn} from './bot'
+import {dmgPlayers} from './players_atak';
 
 export function initData(state) {
   const UNIT_SRC = require('./units-list.json') || [];
@@ -45,25 +46,7 @@ export function chekWin (state) {
   }
 };
 
-function dmgOnePlayer (state, player) {
-  const targerPlayer = Number(!player);
-  const atak = state.getIn(['players', player, 'atak']);
-  if (atak && atak.count() > 2) {
-    var atakOnlyDmg = atak.map(atk => atk.getIn(['unit', 'atk']));
-    const dmg = atakOnlyDmg.reduce( function (prev, currentValue) {
-      return prev + currentValue;
-    });
-    return state.setIn(['players', targerPlayer, 'hp'],
-                       state.getIn(['players', targerPlayer, 'hp']) - dmg)
-                .set('field', state.get('initField'));
-  } else {
-    return state;
-  }
-}
 
-function dmgPlayers (roomState) {
-  return dmgOnePlayer(dmgOnePlayer(roomState, 1), 0);
-}
 
 
 export function setCurPlayer(roomState) {
