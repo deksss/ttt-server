@@ -1,6 +1,6 @@
 import {Map, List} from 'immutable';
 import {shuffleArray} from '../utils';
-import {setAtk, calcHp} from './cells_battle';
+import {setAtk, calcHp, onTurn} from './cells_battle';
 import {findPlayersAtkCell} from './players_atak';
 import {genFieldAnimation} from './field_animate';
 
@@ -42,7 +42,8 @@ export function turnCalc (state) {
 			      setCardsReady(
 			      calcHp(
 			      setAtk(
-			      nextPrepeare(state))))));
+			      onTurn(
+			      nextPrepeare(state)))))));
 
   } else {
     return state;

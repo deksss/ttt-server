@@ -2,7 +2,7 @@ import {Map, List} from 'immutable';
 import {shuffleArray} from '../utils';
 
 function strDirect2Cord (cell, direct) {
-  const DIRECTIOINS = 
+  const DIRECTIOINS =
     {'UL': {x:-1, y: -1},
 	 'U': {x: 0, y: -1},
 	 'UR':{x: 1, y: -1},
@@ -10,9 +10,9 @@ function strDirect2Cord (cell, direct) {
 	 'R': {x: 1, y: 0},
 	 'DL':{x:-1, y: 1},
 	 'D': {x: 0, y: 1},
-	 'DR':{x: 1, y: 1}};	
+	 'DR':{x: 1, y: 1}};
 
-  return {x: Number(DIRECTIOINS[direct].x) + Number(cell.get('x')), 
+  return {x: Number(DIRECTIOINS[direct].x) + Number(cell.get('x')),
   	      y: Number(DIRECTIOINS[direct].y) + Number(cell.get('y'))
   	    };
 }
@@ -38,9 +38,9 @@ function normalizeDirects (cell, field) {
 	  });
 
 	  if (correct && (correct.get('index') === 0 || correct.get('index'))) {
-	   return Map({index: correct.get('index'), 
-	  	           x: cord.x, 
-	  	           y: cord.y, 
+	   return Map({index: correct.get('index'),
+	  	           x: cord.x,
+	  	           y: cord.y,
 	  	           direct: direct});
 	  }
   });
@@ -115,7 +115,7 @@ function callOneCellHp (feild, ataksAction, cell) {
   }
 }
 
-export function calcHp(state) {
+export function calcHp (state) {
 	const ataksAction = state.get('ataksAction');
 	const oldField = state.get('field');
 	const newField = oldField.map(function (cell) {
@@ -124,6 +124,66 @@ export function calcHp(state) {
 
 	return state.set('prevField', state.getIn( 'field'))
 	            .set('field', List(newField));
+}
+
+function healCell (cell, addHp) {
+	const maxHp = cell.getIn(['unit', 'maxHp']);
+	let newHp = cell.getIn(['unit', 'hp']) + addHp;
+	if (newHp > maxHp) {
+    newHp = maxHp;
+	}
+	return cell.setIn(['unit', 'hp'], newHp);
+}
+
+function findNotFullHpAllys (field, cellOwner) {
+	return field.filter(cell => cell.get('owner') === cellOwner &&
+    cell.getIn(['unit', 'hp']) < cell.getIn(['unit', 'maxHp']));
+}
+
+function healOneFriend (state, cell, params) {
+	const targetIds =
+	  findNotFullHpAllys(state.get('field'), cell.get('owner'));
+    console.log('targetIds ' + targetIds);
+  if (targetIds && targetIds.count() > 0) {
+  	let target = targetIds.get(0);
+    return state.setIn(['field', target.get('index')],
+    	                 healCell(target, params.hp));
+  } else {
+   return state;
+  }
+}
+
+const onTurnContainer = {};
+onTurnContainer.healOneFriend = healOneFriend;
+
+function onTurnFireAll (state, onTurnActions) {
+	const curAction = onTurnActions.last();
+  const func = onTurnContainer[curAction.funcName];
+	const newState = func(state, curAction.cell, curAction.params) || state;
+  if ((onTurnActions.count() - 1) > 0) {
+  	return onTurnFireAll(newState, onTurnActions.pop());
+  } else {
+  	return newState;
+  }
+}
+
+export function onTurn (state) {
+	const onTurnActions = state.get('field')
+	                   .filter(cell => cell.getIn(['unit' ,'onTurn'])
+                                  && cell.getIn(['unit' ,'onTurn']).funcName)
+	                   .map(cell => {
+	                   	  let action = {};
+	                      action.funcName = cell.getIn(['unit' ,'onTurn']).funcName;
+	                      action.params = cell.getIn(['unit' ,'onTurn']).params;
+                        action.cell = cell;
+                        return action;
+	                   }) || List([]);
+  console.log('onTurnActions ' + onTurnActions);
+	if (onTurnActions.count() > 0) {
+		return onTurnFireAll(state, onTurnActions);
+	} else {
+		return state;
+	}
 }
 
 export function setAtk (state) {

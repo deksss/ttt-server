@@ -1,4 +1,4 @@
-{ "id": "6",
+{ "id": "9",
   "name": "priest",
   "hp": 5,
   "maxHp": 5,
@@ -9,9 +9,9 @@
   "sprite": "priest", 
   "info": "test text",
   "onStart": [],
-  "onTurn": [
+  "onTurn": 
     {"funcName": "healOneFriend",
-      "params": {"hp": 1}}
-    ],
+      "params": {"hp": 1}
+    },
   "onDied": []
 }

@@ -4,4 +4,6 @@
   "./units/ram.json",
   "./units/swordsman.json",
   "./units/dog.json",
-  "./units/knight-exprt.json"]
+  "./units/knight-exprt.json",
+ "./units/priest.json",
+ "./units/spear.json"]
